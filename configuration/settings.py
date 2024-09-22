@@ -79,8 +79,8 @@ DATABASES = {
         'NAME': 'campusvacay',
         'USER': 'postgres',
         'PASSWORD': 'Birch@302',
-        'HOST': 'localhost',  # Set to your PostgreSQL server's host
-        'PORT': '5432',  # Default PostgreSQL port
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 

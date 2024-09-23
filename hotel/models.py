@@ -1,8 +1,22 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
+from student.models import Student
 from django.core.validators import RegexValidator
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.db import migrations
+
+def create_hotel_group(apps, schema_editor):
+    Group.objects.get_or_create(name='Hotels')
+
+class Migration(migrations.Migration):
+    operations = [
+        migrations.RunPython(create_hotel_group),
+    ]
+
+def add_user_to_hotel_group(user):
+    hotel_group, created = Group.objects.get_or_create(name='Hotels')
+    user.groups.add(hotel_group)
 
 class Hotel(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='hotel_profile')
@@ -31,7 +45,7 @@ class Hotel(models.Model):
     date_added = models.DateTimeField(default=timezone.now, verbose_name='Date Added')
 
     def __str__(self):
-        return f'{self.hotel_name} - Student Profile'
+        return f'{self.hotel_name} - Hotel Profile'
     
     def clean(self):
         super().clean()
@@ -45,3 +59,38 @@ class Hotel(models.Model):
                 self.phone_number = '+' + phone_digits
             else:
                 raise ValidationError("Phone number must have exactly 10 digits or start with '+1' followed by 10 digits.")
+
+# Rooms_Description model for managing different room types for each hotel           
+class RoomsDescription(models.Model):
+    hotel = models.ForeignKey('Hotel', on_delete=models.CASCADE, related_name='rooms')
+
+    # Room type and general information
+    room_type = models.CharField(max_length=255, verbose_name='Room Type')
+    number_of_rooms = models.IntegerField(verbose_name='Number of Rooms')
+
+    # Pricing and facilities
+    price_per_night = models.DecimalField(max_digits=8, decimal_places=2, verbose_name='Price per Night (USD)')
+    facilities = models.TextField(
+        verbose_name='Room Facilities', 
+        help_text="Comma-separated list of room facilities, e.g., Wi-Fi, TV, Mini-bar, Sea View"
+    )
+    breakfast_included = models.BooleanField(default=False, verbose_name='Breakfast Included')
+    
+    # Additional room features
+    room_size = models.CharField(max_length=50, verbose_name='Room Size (e.g., 30 sqm)', blank=True)
+    max_occupancy = models.IntegerField(verbose_name='Maximum Occupancy', help_text="Number of guests allowed", blank=True, null=True)
+    smoking_allowed = models.BooleanField(default=False, verbose_name='Smoking Allowed')
+
+    def __str__(self):
+        return f'{self.hotel.hotel_name} - {self.room_type}'
+    
+# CustomerReviews model for storing reviews from students
+class CustomerReviews(models.Model):
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='hotel_reviews')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='student_reviews')
+    rating = models.PositiveSmallIntegerField(verbose_name='Rating', help_text="Rate between 1 to 5 stars")
+    review = models.TextField(verbose_name='Review', blank=True)
+    date_added = models.DateTimeField(default=timezone.now, verbose_name='Date Added')
+
+    def __str__(self):
+        return f'Review by {self.student.user.username} for {self.hotel.hotel_name} - {self.rating} stars on {self.date_added}'

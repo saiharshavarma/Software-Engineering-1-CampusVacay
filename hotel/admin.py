@@ -1,5 +1,22 @@
 from django.contrib import admin
+from django.db import migrations
+from django.contrib.auth.models import Group
 from .models import Hotel
+
+from django.db import migrations
+from django.contrib.auth.models import Group
+
+def create_hotel_group(apps, schema_editor):
+    Group.objects.get_or_create(name='Hotels')
+
+class Migration(migrations.Migration):
+    operations = [
+        migrations.RunPython(create_hotel_group),
+    ]
+
+def add_user_to_hotel_group(user):
+    hotel_group, created = Group.objects.get_or_create(name='Hotels')
+    user.groups.add(hotel_group)
 
 class HotelAdmin(admin.ModelAdmin):
     list_display = ('get_user_id', 'hotel_name', 'get_email', 'phone_number', 'address', 'average_rating')

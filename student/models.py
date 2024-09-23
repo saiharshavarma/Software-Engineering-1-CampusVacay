@@ -2,6 +2,19 @@ from django.db import models
 from django.contrib.auth.models import User, Group
 from django.core.validators import RegexValidator
 from django.utils import timezone
+from django.db import migrations
+
+def create_student_group(apps, schema_editor):
+    Group.objects.get_or_create(name='Students')
+
+class Migration(migrations.Migration):
+    operations = [
+        migrations.RunPython(create_student_group),
+    ]
+
+def add_user_to_student_group(user):
+    student_group, created = Group.objects.get_or_create(name='Students')
+    user.groups.add(student_group)
     
 # Create Student model
 class Student(models.Model):

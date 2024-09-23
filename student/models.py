@@ -1,23 +1,20 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import User, Group
 from django.core.validators import RegexValidator
 from django.utils import timezone
-
-# Custom user model inheriting from Django's AbstractUser
-class StudentUser(AbstractUser):
-    username = models.CharField(max_length=30, unique=True, verbose_name='Username')
-    email = models.EmailField(unique=True, verbose_name='Email Address')
-    first_name = models.CharField(max_length=30, verbose_name='First Name')
-    last_name = models.CharField(max_length=30, verbose_name='Last Name')
+    
+# Create Student model
+class Student(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student_profile')
     dob = models.DateField(verbose_name='Date of Birth')
-
+    
     # Phone number with validation
     phone_regex = RegexValidator(
-        regex=r'^\+?1?\d{9,10}$',
-        message="Phone number must be entered in the format: '+9999999999'. Up to 10 digits allowed."
+        regex=r'^\+?1?\d{10,11}$',
+        message="Phone number must be entered in the format: '+19999999999'. Up to 10 digits allowed."
     )
-    phone_number = models.CharField(validators=[phone_regex], max_length=15, blank=True, verbose_name='Phone Number')
-
+    phone_number = models.CharField(validators=[phone_regex], max_length=11, blank=True, verbose_name='Phone Number')
+    
     address = models.TextField(verbose_name='Address', blank=True)
 
     # University details
@@ -34,7 +31,6 @@ class StudentUser(AbstractUser):
 
     # Additional fields
     date_joined = models.DateTimeField(default=timezone.now, verbose_name='Date Joined')
-    is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f'{self.username} ({self.first_name} {self.last_name})'
+        return f'{self.user.username} - Student Profile'

@@ -3,6 +3,7 @@ from django.contrib.auth.models import User, Group
 from django.core.validators import RegexValidator
 from django.utils import timezone
 from django.db import migrations
+from django.core.exceptions import ValidationError
 
 def create_student_group(apps, schema_editor):
     Group.objects.get_or_create(name='Students')
@@ -23,10 +24,10 @@ class Student(models.Model):
     
     # Phone number with validation
     phone_regex = RegexValidator(
-        regex=r'^\+?1?\d{10,11}$',
-        message="Phone number must be entered in the format: '+19999999999'. Up to 10 digits allowed."
+        regex=r'^\+?1?\d{10}$',
+        message="Phone number must be entered in the format: '+19999999999'. It must have 10 digits after the country code."
     )
-    phone_number = models.CharField(validators=[phone_regex], max_length=11, blank=True, verbose_name='Phone Number')
+    phone_number = models.CharField(validators=[phone_regex], max_length=12, blank=True, verbose_name='Phone Number')
     
     address = models.TextField(verbose_name='Address', blank=True)
 
@@ -47,3 +48,16 @@ class Student(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - Student Profile'
+
+    def clean(self):
+            super().clean()
+
+            if self.phone_number:
+                phone_digits = self.phone_number.replace('+', '').replace(' ', '').replace('-', '')
+                
+                if len(phone_digits) == 10:
+                    self.phone_number = '+1' + phone_digits
+                elif len(phone_digits) == 11 and phone_digits.startswith('1'):
+                    self.phone_number = '+' + phone_digits
+                else:
+                    raise ValidationError("Phone number must have exactly 10 digits or start with '+1' followed by 10 digits.")

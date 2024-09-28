@@ -29,7 +29,7 @@ class Hotel(models.Model):
         regex=r'^\+?1?\d{10}$',
         message="Phone number must be entered in the format: '+19999999999'. It must have 10 digits after the country code."
     )
-    phone_number = models.CharField(validators=[phone_regex], max_length=12, blank=True, verbose_name='Phone Number')
+    phone_number = models.CharField(validators=[phone_regex], max_length=12, blank=True, verbose_name='Phone Number', unique=True)
     
     # Hotel description and facilities
     description = models.TextField(verbose_name='General Hotel Description', blank=True)

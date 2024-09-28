@@ -47,11 +47,12 @@ def student_registration(request):
                 university_name=form.cleaned_data['university_name'],
                 university_id_proof=form.cleaned_data['university_id_proof']
             )
-
+            student.full_clean()
+            student.save()
             # Log in the user after registration
             login(request, user)
             messages.success(request, "Registration successful!")
-            return redirect('home')  # Redirect to a 'home' page after successful registration
+            return render(request, 'student_registration.html', {'form': form})  # Redirect to a 'home' page after successful registration
 
         else:
             messages.error(request, "Please correct the errors below.")

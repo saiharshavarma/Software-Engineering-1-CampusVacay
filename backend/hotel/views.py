@@ -6,6 +6,27 @@ from .forms import HotelRegistrationForm
 from .models import add_user_to_hotel_group
 from .models import Hotel, RoomsDescription, CustomerReviews
 from django.core.exceptions import PermissionDenied
+from django.contrib.auth.decorators import login_required
+
+
+@login_required
+def hotel_dashboard(request):
+    # Get the logged-in user's hotel profile
+    hotel = get_object_or_404(Hotel, user=request.user)
+
+    # Fetch the rooms associated with this hotel
+    rooms = RoomsDescription.objects.filter(hotel=hotel)
+
+    # Fetch the reviews for this hotel
+    reviews = CustomerReviews.objects.filter(hotel=hotel)
+
+    context = {
+        'hotel': hotel,
+        'rooms': rooms,
+        'reviews': reviews
+    }
+    return render(request, 'hotel_dashboard.html', context)
+
 
 def hotel_registration(request):
     if request.method == 'POST':

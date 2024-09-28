@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hotel Dashboard - {{ hotel.hotel_name }}</title>
+</head>
+<body>
+    <h1>Welcome to {{ hotel.hotel_name }}'s Dashboard</h1>
+
+    <!-- Hotel Information -->
+    <section>
+        <h2>Hotel Information</h2>
+        <p><strong>Hotel Name:</strong> {{ hotel.hotel_name }}</p>
+        <p><strong>Phone Number:</strong> {{ hotel.phone_number }}</p>
+        <p><strong>Address:</strong> {{ hotel.address }}</p>
+        <p><strong>Check-In Time:</strong> {{ hotel.check_in_time }}</p>
+        <p><strong>Check-Out Time:</strong> {{ hotel.check_out_time }}</p>
+        <p><strong>Facilities:</strong> {{ hotel.facilities }}</p>
+        <p><strong>Student Discount:</strong> {{ hotel.student_discount }}%</p>
+        <p><strong>Special Offers:</strong> {{ hotel.special_offers }}</p>
+    </section>
+
+    <!-- Room Management Section -->
+    <section>
+        <h2>Rooms</h2>
+        <a href="{% url 'add_room' hotel.id %}">Add New Room</a>
+
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Room Type</th>
+                    <th>Number of Rooms</th>
+                    <th>Price per Night</th>
+                    <th>Max Occupancy</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for room in rooms %}
+                <tr>
+                    <td>{{ room.room_type }}</td>
+                    <td>{{ room.number_of_rooms }}</td>
+                    <td>{{ room.price_per_night }}</td>
+                    <td>{{ room.max_occupancy }}</td>
+                    <td>
+                        <a href="{% url 'edit_room' room.id %}">Edit</a> |
+                        <a href="{% url 'delete_room' room.id %}">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No rooms available. <a href="{% url 'add_room' hotel.id %}">Add a room</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Customer Reviews Section -->
+    <section>
+        <h2>Customer Reviews</h2>
+        <ul>
+            {% for review in reviews %}
+            <li>
+                <strong>{{ review.student.user.username }}</strong> rated {{ review.rating }} stars
+                <p>{{ review.review }}</p>
+                <a href="{% url 'edit_review' review.id %}">Edit Review</a> |
+                <a href="{% url 'delete_review' review.id %}">Delete Review</a>
+            </li>
+            {% empty %}
+            <p>No reviews available for this hotel.</p>
+            {% endfor %}
+        </ul>
+    </section>
+</body>
+</html>

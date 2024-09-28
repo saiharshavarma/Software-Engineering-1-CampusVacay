@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Delete Room - {{ room.hotel.hotel_name }}</title>
+</head>
+<body>
+    <h1>Are you sure you want to delete this room?</h1>
+    <p><strong>Room Type:</strong> {{ room.room_type }}</p>
+    <p><strong>Number of Rooms:</strong> {{ room.number_of_rooms }}</p>
+    <p><strong>Price per Night:</strong> {{ room.price_per_night }}</p>
+
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit">Yes, Delete Room</button>
+    </form>
+    <a href="{% url 'view_room_details' room.hotel.id %}">Cancel</a>
+</body>
+</html>

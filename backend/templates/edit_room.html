@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Room - {{ room.hotel.hotel_name }}</title>
+</head>
+<body>
+    <h1>Edit Room Details for {{ room.hotel.hotel_name }}</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        <p>
+            <label for="room_type">Room Type:</label>
+            <input type="text" name="room_type" value="{{ room.room_type }}" required>
+        </p>
+        <p>
+            <label for="number_of_rooms">Number of Rooms:</label>
+            <input type="number" name="number_of_rooms" value="{{ room.number_of_rooms }}" required>
+        </p>
+        <p>
+            <label for="price_per_night">Price per Night (USD):</label>
+            <input type="text" name="price_per_night" value="{{ room.price_per_night }}" required>
+        </p>
+        <p>
+            <label for="facilities">Room Facilities (comma-separated):</label>
+            <textarea name="facilities">{{ room.facilities }}</textarea>
+        </p>
+        <p>
+            <label for="breakfast_included">Breakfast Included:</label>
+            <input type="checkbox" name="breakfast_included" {% if room.breakfast_included %}checked{% endif %}>
+        </p>
+        <p>
+            <label for="room_size">Room Size (e.g., 30 sqm):</label>
+            <input type="text" name="room_size" value="{{ room.room_size }}">
+        </p>
+        <p>
+            <label for="max_occupancy">Max Occupancy:</label>
+            <input type="number" name="max_occupancy" value="{{ room.max_occupancy }}">
+        </p>
+        <p>
+            <label for="smoking_allowed">Smoking Allowed:</label>
+            <input type="checkbox" name="smoking_allowed" {% if room.smoking_allowed %}checked{% endif %}>
+        </p>
+        <button type="submit">Update Room</button>
+    </form>
+</body>
+</html>

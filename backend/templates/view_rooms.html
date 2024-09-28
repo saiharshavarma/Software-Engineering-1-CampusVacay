@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Room Details - {{ hotel.hotel_name }}</title>
+</head>
+<body>
+    <h1>Room Details for {{ hotel.hotel_name }}</h1>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Room Type</th>
+                <th>Number of Rooms</th>
+                <th>Price per Night</th>
+                <th>Facilities</th>
+                <th>Breakfast Included</th>
+                <th>Room Size</th>
+                <th>Max Occupancy</th>
+                <th>Smoking Allowed</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for room in rooms %}
+            <tr>
+                <td>{{ room.room_type }}</td>
+                <td>{{ room.number_of_rooms }}</td>
+                <td>{{ room.price_per_night }}</td>
+                <td>{{ room.facilities }}</td>
+                <td>{{ room.breakfast_included|yesno:"Yes,No" }}</td>
+                <td>{{ room.room_size }}</td>
+                <td>{{ room.max_occupancy }}</td>
+                <td>{{ room.smoking_allowed|yesno:"Yes,No" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

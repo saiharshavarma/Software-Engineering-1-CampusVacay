@@ -18,3 +18,11 @@ class StudentRegistrationForm(forms.ModelForm):
     class Meta:
         model = Student
         fields = ['dob', 'phone_number', 'address', 'university_name', 'university_id_proof']
+
+class StudentLoginForm(forms.ModelForm):
+    username = forms.CharField(max_length=150, required=True)
+    password = forms.CharField(widget=forms.PasswordInput(), required=True)
+
+    class Meta:
+        model = Student
+        fields = []

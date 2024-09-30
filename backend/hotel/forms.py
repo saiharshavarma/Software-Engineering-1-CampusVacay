@@ -26,11 +26,3 @@ class HotelRegistrationForm(forms.ModelForm):
             'check_in_time', 'check_out_time', 'cancellation_policy', 
             'student_discount', 'special_offers'
         ]
-
-class HotelLoginForm(forms.ModelForm):
-    username = forms.CharField(max_length=150, required=True)
-    password = forms.CharField(widget=forms.PasswordInput(), required=True)
-
-    class Meta:
-        model = Hotel
-        fields = []

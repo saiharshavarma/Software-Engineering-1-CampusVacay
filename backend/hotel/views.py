@@ -1,9 +1,8 @@
-from django.contrib.auth.context_processors import auth
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .forms import HotelRegistrationForm, HotelLoginForm
+from .forms import HotelRegistrationForm
 from .models import add_user_to_hotel_group
 from .models import Hotel, RoomsDescription, CustomerReviews
 from django.core.exceptions import PermissionDenied
@@ -218,55 +217,3 @@ def delete_review(request, review_id):
         return redirect('hotel_details', hotel_id=review.hotel.id)
 
     return render(request, 'delete_review.html', {'review': review})
-
-
-def hotel_login(request):
-    # Check if the request method is GET
-    if request.method == 'GET':
-        # Check if the user is authenticated
-        if request.user.is_authenticated:
-            # Check if the user belongs to the 'Hotels' group
-            if request.user.groups.filter(name='Hotels').exists():
-                # Redirect to the hotel dashboard if the user is in the 'Hotels' group
-                return redirect('hotel_dashboard')
-            # Check if the user belongs to the 'Students' group
-            elif request.user.groups.filter(name='Students').exists():
-                # Render the index page if the user is in the 'Students' group
-                return render(request, 'index.html')
-        # Create an instance of the HotelLoginForm
-        form = HotelLoginForm(request.POST)
-        # Render the hotel login page with the form
-        return render(request, 'hotel_login.html', {'form': form})
-
-    # Check if the request method is POST
-    elif request.method == 'POST':
-        # Create an instance of the HotelLoginForm with the POST data
-        form = HotelLoginForm(request.POST)
-
-        # Validate the form
-        if form.is_valid():
-            # Get the username and password from the cleaned data
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-
-            # Authenticate the user
-            user = authenticate(username=username, password=password)
-            # Check if the user is authenticated and belongs to the 'Hotels' group
-            if user and user.groups.filter(name='Hotels').exists():
-                # Log the user in and redirect to the hotel dashboard
-                login(request, user)
-                return redirect('hotel_dashboard')
-            else:
-                # Display an error message if the username or password is invalid
-                messages.error(request, "Invalid username or password!")
-                return redirect('hotel_login')
-    else:
-        # Create an instance of the HotelLoginForm
-        form = HotelLoginForm()
-        # Render the hotel login page with the form
-        return render(request, 'hotel_login.html', {'form': form})
-
-
-def hotel_logout(request):
-    logout(request)
-    return redirect('hotel_login')

@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     # user defined apps
     'student',
     'hotel',
+    'rest_framework',
+    
 ]
 
 MIDDLEWARE = [
@@ -107,6 +109,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'rest_framework.authentication.TokenAuthentication',
+#     ],
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.IsAuthenticated',
+#     ],
+# }
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/

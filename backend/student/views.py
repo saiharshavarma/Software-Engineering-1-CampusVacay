@@ -4,6 +4,7 @@ from rest_framework import status
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
+<<<<<<< HEAD
 from .models import Student
 from .serializers import StudentSerializer
 from rest_framework.permissions import IsAuthenticated
@@ -17,6 +18,32 @@ class StudentRegistration(APIView):
         data = request.data
         serializer = StudentSerializer(data=data)
         permission_classes = [AllowAny]
+=======
+from .forms import StudentRegistrationForm, StudentLoginForm
+from .models import Student, add_user_to_student_group
+from rest_framework.response import Response
+from rest_framework import generics
+from rest_framework.permissions import AllowAny
+from .serializers import UserRegistrationSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
+
+class UserRegistrationView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserRegistrationSerializer
+    permission_classes = [AllowAny] 
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            token = request.user.auth_token
+            return Response({"message": "Successfully logged out."})
+        except:
+            return Response({"error": "Something went wrong."}, status=400)
+>>>>>>> api
 
         if serializer.is_valid():
             username = data['username']

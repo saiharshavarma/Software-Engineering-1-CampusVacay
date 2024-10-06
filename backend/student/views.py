@@ -2,10 +2,30 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
-from .models import Student
 from .forms import StudentRegistrationForm, StudentLoginForm
-from .models import add_user_to_student_group
+from .models import Student, add_user_to_student_group
+from rest_framework.response import Response
+from rest_framework import generics
+from rest_framework.permissions import AllowAny
+from .serializers import UserRegistrationSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
 
+class UserRegistrationView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserRegistrationSerializer
+    permission_classes = [AllowAny] 
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            token = request.user.auth_token
+            return Response({"message": "Successfully logged out."})
+        except:
+            return Response({"error": "Something went wrong."}, status=400)
 
 def student_registration(request):
     if request.method == 'POST':

@@ -32,15 +32,15 @@ const RegisterForm = ({type}) => {
     event.preventDefault();
     console.log(formData);
     const test={
-      "username": "kevin",
-      "password": "kevin12345",
-      "first_name": "kevin",
-      "last_name": "yen",
-      "email": "123@gmail.com",
+      "username": formData.username,
+      "password": formData.password,
+      "first_name": formData.name,
+      "last_name": formData.name,
+      "email": formData.email,
       "dob": "1999-06-16",
-      "phone_number": "1",
-      "address": "138457938",
-      "university_name": "1235674",
+      "phone_number": formData.phone,
+      "address": "testaddress",
+      "university_name": formData.university_name,
       "university_id_proof": formData.file
     }
     console.log(test);
@@ -230,7 +230,7 @@ const RegisterForm = ({type}) => {
           />
           </div>
 
-          <input type="file" value={formData.file} onChange={handleChange} id="file" name="file" accept="image/png, image/jpeg, application/pdf" />
+          <input className="hidden" type="file" value={formData.file} onChange={handleChange} id="file" name="file" accept="image/png, image/jpeg, application/pdf" />
 
       
           <br/><br/>
@@ -277,20 +277,20 @@ const HotelRegisterForm = ({type}) => {
 
   const handleSubmit = async(event) => {
     event.preventDefault();
-    console.log(formData);
+    
     const test={
-      "username": "kevin",
-      "password": "kevin12345",
-      "first_name": "kevin",
-      "last_name": "yen",
-      "email": "123@gmail.com",
+      "username": formData.username,
+      "password": formData.password,
+      "first_name": formData.name,
+      "last_name": formData.name,
+      "email": formData.email,
       "dob": "1999-06-16",
-      "phone_number": "1",
-      "address": "138457938",
-      "university_name": "1235674",
+      "phone_number": formData.phone,
+      "address": "testaddress",
+      "university_name": formData.university_name,
       "university_id_proof": formData.file
     }
-    console.log(test);
+
     try {
       const res = await fetch('http://3.16.159.54/student/api/register/', {
           method: 'POST',
@@ -302,14 +302,13 @@ const HotelRegisterForm = ({type}) => {
 
       if (!res.ok) {
         const data = await res.json();
-        console.log(data);
         throw new Error('Network response was not ok');
       }
       
-      setError(null); // Clear previous errors
+      setError(null); 
     } catch (err) {
         setError(err.message);
-        setResponse(null); // Clear previous response
+        setResponse(null); 
     }
 
     
@@ -447,7 +446,7 @@ const HotelRegisterForm = ({type}) => {
           />
           </div>
 
-          <input type="file" value={formData.file} onChange={handleChange} id="file" name="file" accept="image/png, image/jpeg, application/pdf" />
+          <input className="hidden" type="file" value={formData.file} onChange={handleChange} id="file" name="file" accept="image/png, image/jpeg, application/pdf" />
 
       
           <br/><br/>

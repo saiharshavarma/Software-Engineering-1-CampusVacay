@@ -75,27 +75,6 @@ body {
 }
 /*END RESETS*/
 /* GLOBAL STYLES */
-.inline-block1{
-  display: inline-block;
-  width: 75%;
-  padding-right: 5px;
-}
-.inline-block2{
-  display: inline-block;
-  width: 25%;
-  padding-left: 5px;
-}
-.inline-block3{
-  display: inline-block;
-  width: 90%;
-  padding-right: 5px;
-}
-.inline-block4{
-  display: inline-block;
-  width: 10%;
-  padding-left: 5px;
-  border: none;
-}
 
 .container {
   display: flex;
@@ -117,7 +96,7 @@ body {
   text-align: center;
   border-radius: 10px;
   align-content: center;
-  height: 160vh;
+  height: 100vh;
   background-color: rgba(240, 240, 240, 0.7);
 }
 

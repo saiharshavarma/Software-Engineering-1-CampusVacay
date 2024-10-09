@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, User, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Header = () => (
   <header className="flex justify-between items-center py-4 px-8 bg-white">
@@ -11,7 +12,9 @@ const Header = () => (
         ))}
       </ul>
     </nav>
-    <button className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition duration-300">Login</button>
+    <Link to="/login" className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition duration-300">
+      Login
+    </Link>
   </header>
 );
 

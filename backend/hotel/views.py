@@ -8,7 +8,28 @@ from .models import add_user_to_hotel_group
 from .models import Hotel, RoomsDescription, CustomerReviews
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
+from rest_framework.response import Response
+from rest_framework import generics
+from rest_framework.permissions import AllowAny
+from .serializers import UserRegistrationSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
 
+class UserRegistrationView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserRegistrationSerializer
+    permission_classes = [AllowAny]
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            token = request.user.auth_token
+            return Response({"message": "Successfully logged out."})
+        except:
+            return Response({"error": "Something went wrong."}, status=400)
 
 @login_required
 def hotel_dashboard(request):

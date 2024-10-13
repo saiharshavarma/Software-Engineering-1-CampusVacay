@@ -5,16 +5,19 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from .forms import HotelRegistrationForm, HotelLoginForm
 from .models import add_user_to_hotel_group
-from .models import Hotel, RoomsDescription, CustomerReviews
+from .models import Hotel, RoomsDescription, CustomerReviews, Reservation
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from rest_framework.response import Response
-from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from .serializers import UserRegistrationSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
+from rest_framework import generics, status
+from .serializers import HotelSerializer
+from django.db.models import Q
+from datetime import datetime
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -48,6 +51,79 @@ def hotel_dashboard(request):
         'reviews': reviews
     }
     return render(request, 'hotel_dashboard.html', context)
+
+class HotelSearchView(APIView):
+    def post(self, request):
+        # Extract parameters from request body
+        destination = request.data.get('destination')
+        check_in_date = request.data.get('check_in_date')
+        check_out_date = request.data.get('check_out_date')
+        guests = request.data.get('guests')
+
+        # Validate input
+        if not destination or not check_in_date or not check_out_date or not guests:
+            return Response({"error": "All fields (destination, check_in_date, check_out_date, guests) are required."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            check_in_date = datetime.strptime(check_in_date, '%Y-%m-%d').date()
+            check_out_date = datetime.strptime(check_out_date, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Filter hotels by destination (city or country or location or address or hotel name)
+        queryset = Hotel.objects.filter(
+            Q(city__icontains=destination) | Q(country__icontains=destination) | Q(location__icontains=destination) | Q(address__icontains=destination) | Q(hotel_name__icontains=destination)
+        )
+
+        # Filter by room capacity (guests)
+        queryset = queryset.filter(rooms__max_occupancy__gte=guests)
+
+        available_hotels = {}
+
+        for hotel in queryset:
+            hotel_rooms = hotel.rooms.all()
+
+            # Initialize an empty list of available rooms for this hotel
+            available_rooms = []
+
+            for room in hotel_rooms:
+                # Count how many rooms of this type are already booked for the given date range
+                booked_rooms = Reservation.objects.filter(
+                    room=room,
+                    check_in_date__lte=check_out_date,
+                    check_out_date__gte=check_in_date
+                ).count()
+
+                # Calculate available rooms
+                available_room_count = room.number_of_rooms - booked_rooms
+
+                if available_room_count > 0:
+                    room_data = {
+                        "room_type": room.room_type,
+                        "available_rooms": available_room_count,
+                        "price_per_night": room.price_per_night,
+                        "facilities": room.facilities,
+                        "max_occupancy": room.max_occupancy
+                    }
+                    available_rooms.append(room_data)
+
+            # Only add the hotel if there are available rooms
+            if available_rooms:
+                if hotel.hotel_name not in available_hotels:
+                    available_hotels[hotel.hotel_name] = {
+                        "hotel_id": hotel.id,
+                        "hotel_name": hotel.hotel_name,
+                        "address": hotel.address,
+                        "description": hotel.description,
+                        "facilities": hotel.facilities,
+                        "check_in_time": hotel.check_in_time,
+                        "check_out_time": hotel.check_out_time,
+                        "rooms": available_rooms
+                    }
+
+        # Convert available_hotels to a list to return the response
+        return Response(list(available_hotels.values()), status=status.HTTP_200_OK)
 
 
 def hotel_registration(request):

@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Hotel, add_user_to_hotel_group
-
+from .models import Hotel, add_user_to_hotel_group, RoomsDescription, Reservation
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     hotel_name = serializers.CharField(max_length=255, required=True)
@@ -44,10 +43,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             email=validated_data['email']
         )
 
-        # Add user to "Students" group
+        # Add user to "Hotel" group
         add_user_to_hotel_group(user)
 
-        # Create Student profile linked to the User
+        # Create Hotel profile linked to the User
         hotel = Hotel.objects.create(
             user=user,
             hotel_name=hotel_name,
@@ -64,3 +63,20 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         hotel.full_clean()
         hotel.save()
         return user
+
+class RoomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoomsDescription
+        fields = '__all__'
+
+class HotelSerializer(serializers.ModelSerializer):
+    rooms = RoomSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Hotel
+        fields = '__all__'
+
+class ReservationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reservation
+        fields = '__all__'

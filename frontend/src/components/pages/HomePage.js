@@ -1,8 +1,80 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, User, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const Header = () => (
+//const isLogin = () => {
+//  return !!localStorage.getItem('authToken');
+//};
+
+
+
+
+const Header = () => {
+  
+  const [token, setToken] = useState(null);
+  useEffect(() => {
+    const storedToken = localStorage.getItem('authToken');
+    if (storedToken) {
+      console.log(storedToken)
+      setToken(storedToken);
+    }
+  }, []);
+  const [message, setMessage] = useState({ type: '', content: '' });
+
+  const handleLogout = async() => {
+    try {
+      const url = `http://3.16.159.54/student/api/logout/`;
+      console.log('Sending request to:', url);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': ' Token ' + localStorage.getItem('authToken')
+        },
+        body: JSON.stringify(''),
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      const responseText = await response.text();
+      console.log('Full response text:', responseText);
+
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+        console.log('Parsed JSON response:', responseData);
+      } catch (e) {
+        console.error('Error parsing JSON:', e);
+        setMessage({ type: 'error', content: 'Server returned an unexpected response. Please try again.' });
+        return;
+      }
+
+      if (!response.ok) {
+        // Handle validation errors
+        if (response.status === 400 && typeof responseData === 'object') {
+          const errorMessages = Object.entries(responseData)
+            .map(([key, value]) => `${key}: ${value.join(', ')}`)
+            .join('; ');
+          throw new Error(errorMessages);
+        } else {
+          throw new Error(responseData.detail || JSON.stringify(responseData) || 'Login failed');
+        }
+      }
+
+      console.log('Logout successful:', responseData);
+      setMessage({ type: 'success', content: 'Logout successful!' });
+      localStorage.removeItem('authToken');
+      setToken(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      setMessage({ type: 'error', content: error.message });
+    }
+    
+  };
+
+  return(
   <header className="flex justify-between items-center py-4 px-8 bg-white">
     <div className="text-2xl font-bold text-blue-600">CampusVacay.</div>
     <nav>
@@ -12,11 +84,20 @@ const Header = () => (
         ))}
       </ul>
     </nav>
-    <Link to="/login" className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition duration-300">
+
+    { token ? (
+      <button onClick={handleLogout} className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition duration-300">
+        Logout
+      </button>
+    ) : (
+      <Link to="/login" className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition duration-300">
       Login
-    </Link>
+      </Link> 
+    )}
+
   </header>
-);
+  )
+};
 
 const Hero = () => (
   <section className="flex justify-between items-center py-12 px-8 bg-white">

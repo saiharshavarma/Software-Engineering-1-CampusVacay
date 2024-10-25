@@ -1,16 +1,20 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from .forms import StudentRegistrationForm, StudentLoginForm
 from .models import Student, add_user_to_student_group
 from rest_framework.response import Response
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from .serializers import UserRegistrationSerializer
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.authtoken.models import Token
+# from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
+# from datetime import datetime
+import requests
+
+from hotel.models import Hotel, RoomsDescription, CustomerReviews
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -135,3 +139,39 @@ def student_login(request):
 def student_logout(request):
     logout(request)
     return redirect('student_login')
+
+class StudentSearchView(APIView):
+    def post(self, request):
+        destination = request.data.get('destination')
+        check_in_date = request.data.get('check_in_date')
+        check_out_date = request.data.get('check_out_date')
+        guests = request.data.get('guests')
+
+        if not destination or not check_in_date or not check_out_date or not guests:
+            return Response({"error": "All fields (destination, check_in_date, check_out_date, guests) are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        search_payload = {
+            "destination": destination,
+            "check_in_date": check_in_date,
+            "check_out_date": check_out_date,
+            "guests": guests
+        }
+        try:
+            response = requests.post('http://localhost:8000/hotel/api/search/', data=search_payload)
+            if response.status_code == 200:
+                return Response(response.json(), status=status.HTTP_200_OK)
+            else:
+                return Response(response.json(), status=response.status_code)
+        except requests.RequestException as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def view_room_details(request, hotel_id):
+    hotel = get_object_or_404(Hotel, id=hotel_id)
+    rooms = RoomsDescription.objects.filter(hotel=hotel)
+    return render(request, 'view_rooms.html', {'hotel': hotel, 'rooms': rooms})
+
+def view_hotel_reviews(request, hotel_id):
+    hotel = get_object_or_404(Hotel, id=hotel_id)
+    reviews = CustomerReviews.objects.filter(hotel=hotel)
+    return render(request, 'view_reviews.html', {'hotel': hotel, 'reviews': reviews})

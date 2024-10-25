@@ -5,9 +5,15 @@ from django.contrib import messages
 from .forms import StudentRegistrationForm, StudentLoginForm
 from .models import Student, add_user_to_student_group
 from rest_framework.response import Response
+from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
-from .serializers import UserRegistrationSerializer
+from rest_framework import serializers
+from .serializers import UserRegistrationSerializer, StudentProfileSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import ListAPIView
+from hotel.models import Reservation
+from hotel.serializers import ReservationListSerializer
 from rest_framework.permissions import IsAuthenticated
 # from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
@@ -139,6 +145,25 @@ def student_login(request):
 def student_logout(request):
     logout(request)
     return redirect('student_login')
+
+class StudentProfileView(RetrieveUpdateAPIView):
+    serializer_class = StudentProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        # Ensure only the logged-in student can edit their profile
+        try:
+            return self.request.user.student_profile
+        except Student.DoesNotExist:
+            raise serializers.ValidationError("Student profile not found.")
+
+class StudentReservationHistory(ListAPIView):
+    serializer_class = ReservationListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Filter reservations by the logged-in student
+        return Reservation.objects.filter(student=self.request.user.student_profile)
 
 class StudentSearchView(APIView):
     def post(self, request):

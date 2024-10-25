@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import UserRegistrationView, LogoutView, HotelSearchView
+from .views import UserRegistrationView, LogoutView, HotelSearchView, RoomBookingView, HotelManagerReservations, HotelDashboardView, UpdateReservationView, CancelReservationView
 from rest_framework.authtoken.views import obtain_auth_token
 
 # urlpatterns = [
@@ -32,4 +32,9 @@ urlpatterns = [
     path('api/review/<int:review_id>/edit/', views.edit_review, name='edit_review'),
     path('api/review/<int:review_id>/delete/', views.delete_review, name='delete_review'),
     path('api/search/', HotelSearchView.as_view(), name='hotel-search'),
+    path('api/<int:hotel_id>/room/<int:room_id>/book/', RoomBookingView.as_view(), name='book-room'),
+    path('api/hotel/reservations/', HotelManagerReservations.as_view(), name='hotel-reservations'),
+    path('api/hotel/dashboard/', HotelDashboardView.as_view(), name='hotel-dashboard'),
+    path('api/reservation/<int:pk>/update/', UpdateReservationView.as_view(), name='update-reservation'),
+    path('api/reservation/<int:pk>/cancel/', CancelReservationView.as_view(), name='cancel-reservation'),
 ]

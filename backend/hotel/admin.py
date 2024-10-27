@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Hotel, RoomsDescription, CustomerReviews
+from .models import Hotel, RoomsDescription, CustomerReviews, Reservation
 
 class HotelAdmin(admin.ModelAdmin):
     list_display = ('get_user_id', 'hotel_name', 'get_email', 'phone_number', 'address', 'average_rating')
@@ -36,5 +36,6 @@ class RoomsDescriptionAdmin(admin.ModelAdmin):
     list_filter = ('breakfast_included', 'smoking_allowed', 'max_occupancy')
 
 admin.site.register(RoomsDescription, RoomsDescriptionAdmin)
+admin.site.register(Reservation)
 admin.site.register(CustomerReviews)
 admin.site.register(Hotel, HotelAdmin)

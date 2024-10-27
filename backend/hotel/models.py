@@ -23,6 +23,9 @@ class Hotel(models.Model):
     
     hotel_name = models.CharField(max_length=255, verbose_name='Hotel Name')
     address = models.TextField(verbose_name='Address')
+    location = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
     
     # Phone number with validation
     phone_regex = RegexValidator(
@@ -83,6 +86,16 @@ class RoomsDescription(models.Model):
 
     def __str__(self):
         return f'{self.hotel.hotel_name} - {self.room_type}'
+    
+class Reservation(models.Model):
+    room = models.ForeignKey(RoomsDescription, on_delete=models.CASCADE, related_name='reservations')
+    check_in_date = models.DateField(verbose_name='Check-in Date')
+    check_out_date = models.DateField(verbose_name='Check-out Date')
+    guests = models.IntegerField(verbose_name='Number of Guests')
+    booking_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Reservation for {self.room.hotel.hotel_name} from {self.check_in_date} to {self.check_out_date}'
     
 # CustomerReviews model for storing reviews from students
 class CustomerReviews(models.Model):

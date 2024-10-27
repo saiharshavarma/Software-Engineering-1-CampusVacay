@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import UserRegistrationView, LogoutView
+from .views import UserRegistrationView, LogoutView, HotelSearchView
 from rest_framework.authtoken.views import obtain_auth_token
 
 # urlpatterns = [
@@ -31,4 +31,5 @@ urlpatterns = [
     path('api/<int:hotel_id>/review/add/', views.create_review, name='add_review'),
     path('api/review/<int:review_id>/edit/', views.edit_review, name='edit_review'),
     path('api/review/<int:review_id>/delete/', views.delete_review, name='delete_review'),
+    path('api/search/', HotelSearchView.as_view(), name='hotel-search'),
 ]

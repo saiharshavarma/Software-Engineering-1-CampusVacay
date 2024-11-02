@@ -79,4 +79,43 @@ class HotelSerializer(serializers.ModelSerializer):
 class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
-        fields = '__all__'
+        fields = [
+            'room', 'student', 'first_name', 'last_name', 'email',
+            'country', 'phone_number', 'expected_arrival_time', 
+            'special_requests', 'payment_mode', 'check_in_date', 
+            'check_out_date', 'guests'
+        ]
+
+    def validate(self, data):
+        # Ensure check-out date is after check-in date
+        if data['check_out_date'] <= data['check_in_date']:
+            raise serializers.ValidationError("Check-out date must be after check-in date.")
+        
+        # Optional: Add logic to check room availability
+
+        return data
+    
+class ReservationListSerializer(serializers.ModelSerializer):
+    hotel_name = serializers.CharField(source='room.hotel.hotel_name', read_only=True)
+    room_type = serializers.CharField(source='room.room_type', read_only=True)
+
+    class Meta:
+        model = Reservation
+        fields = [
+            'id', 'hotel_name', 'room_type', 'check_in_date', 'check_out_date', 
+            'guests', 'booking_date', 'first_name', 'last_name', 'email', 
+            'expected_arrival_time', 'special_requests', 'payment_mode'
+        ]
+
+class ReservationDetailSerializer(serializers.ModelSerializer):
+    hotel_name = serializers.CharField(source='room.hotel.hotel_name', read_only=True)
+    room_type = serializers.CharField(source='room.room_type', read_only=True)
+
+    class Meta:
+        model = Reservation
+        fields = [
+            'id', 'hotel_name', 'room_type', 'first_name', 'last_name', 'email', 
+            'phone_number', 'expected_arrival_time', 'special_requests', 'payment_mode',
+            'check_in_date', 'check_out_date', 'guests', 'room_number', 'checked_in', 
+            'additional_charges', 'canceled', 'cancellation_date', 'cancellation_reason'
+        ]

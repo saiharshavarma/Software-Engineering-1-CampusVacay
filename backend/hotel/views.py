@@ -10,12 +10,13 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from .serializers import UserRegistrationSerializer
+from .serializers import UserRegistrationSerializer, ReservationSerializer, ReservationListSerializer, ReservationDetailSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework import generics, status
 from .serializers import HotelSerializer
+from rest_framework.generics import ListAPIView, UpdateAPIView
 from django.db.models import Q
 from datetime import datetime
 
@@ -51,6 +52,30 @@ def hotel_dashboard(request):
         'reviews': reviews
     }
     return render(request, 'hotel_dashboard.html', context)
+
+
+class HotelDashboardView(ListAPIView):
+    serializer_class = ReservationDetailSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Get the selected date from query parameters (default to today)
+        date_str = self.request.query_params.get('date', datetime.today().strftime('%Y-%m-%d'))
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+        # Filter reservations for this hotel on the selected date
+        return Reservation.objects.filter(
+            room__hotel__user=self.request.user, 
+            check_in_date=date
+        ).order_by('check_in_date')
+
+class UpdateReservationView(UpdateAPIView):
+    serializer_class = ReservationDetailSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Ensure that only the hotel manager can update their hotel’s reservations
+        return Reservation.objects.filter(room__hotel__user=self.request.user)
 
 class HotelSearchView(APIView):
     def post(self, request):
@@ -125,6 +150,29 @@ class HotelSearchView(APIView):
         # Convert available_hotels to a list to return the response
         return Response(list(available_hotels.values()), status=status.HTTP_200_OK)
 
+class RoomBookingView(APIView):
+    permission_classes = [IsAuthenticated]  # Only logged-in students can book rooms
+
+    def post(self, request, hotel_id, room_id):
+        try:
+            room = RoomsDescription.objects.get(id=room_id, hotel__id=hotel_id)
+        except RoomsDescription.DoesNotExist:
+            return Response({"error": "Room not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ReservationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(student=request.user.student_profile, room=room)
+            return Response({"message": "Room booked successfully!", "data": serializer.data}, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class HotelManagerReservations(ListAPIView):
+    serializer_class = ReservationListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Filter reservations for rooms managed by the logged-in hotel manager
+        return Reservation.objects.filter(room__hotel__user=self.request.user)
 
 def hotel_registration(request):
     if request.method == 'POST':
@@ -192,6 +240,24 @@ def hotel_registration(request):
 
     return render(request, 'hotel_registration.html', {'form': form})
 
+class CancelReservationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            reservation = Reservation.objects.get(pk=pk, student=request.user.student_profile)
+        except Reservation.DoesNotExist:
+            return Response({"error": "Reservation not found or not authorized."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the reservation is already canceled
+        if reservation.canceled:
+            return Response({"error": "This reservation is already canceled."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Cancel the reservation and save the reason (if provided)
+        reason = request.data.get("cancellation_reason", "No reason provided.")
+        reservation.cancel(reason)
+
+        return Response({"message": "Reservation canceled successfully."}, status=status.HTTP_200_OK)
 
 def view_room_details(request, hotel_id):
     hotel = get_object_or_404(Hotel, id=hotel_id)

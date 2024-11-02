@@ -45,3 +45,15 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         student.full_clean()
         student.save()
         return user
+    
+class StudentProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = ['dob', 'phone_number', 'address', 'university_name', 'university_id_proof']
+
+    def validate_phone_number(self, value):
+        # Ensure the phone number follows the required format.
+        phone_digits = value.replace('+', '').replace(' ', '').replace('-', '')
+        if len(phone_digits) not in [10, 11] or (len(phone_digits) == 11 and not phone_digits.startswith('1')):
+            raise serializers.ValidationError("Phone number must have exactly 10 digits or start with '+1'.")
+        return value

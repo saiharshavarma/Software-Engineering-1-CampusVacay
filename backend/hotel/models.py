@@ -89,13 +89,44 @@ class RoomsDescription(models.Model):
     
 class Reservation(models.Model):
     room = models.ForeignKey(RoomsDescription, on_delete=models.CASCADE, related_name='reservations')
-    check_in_date = models.DateField(verbose_name='Check-in Date')
-    check_out_date = models.DateField(verbose_name='Check-out Date')
-    guests = models.IntegerField(verbose_name='Number of Guests')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='reservations')
+    first_name = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
+    email = models.EmailField()
+    country = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=15)
+    expected_arrival_time = models.TimeField()
+    special_requests = models.TextField(blank=True, null=True)
+    payment_mode = models.CharField(max_length=50, choices=[('card', 'Card'), ('cash', 'Cash')], default='card')
+
+    check_in_date = models.DateField()
+    check_out_date = models.DateField()
+    guests = models.IntegerField()
     booking_date = models.DateTimeField(auto_now_add=True)
 
+    room_number = models.CharField(max_length=10, blank=True, null=True)  # Room number on check-in
+    checked_in = models.BooleanField(default=False)  # Check-in status
+    additional_charges = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Track extra charges
+
+    # New fields for cancellation logic
+    canceled = models.BooleanField(default=False)
+    cancellation_date = models.DateTimeField(blank=True, null=True)
+    cancellation_reason = models.TextField(blank=True, null=True)
+    
     def __str__(self):
-        return f'Reservation for {self.room.hotel.hotel_name} from {self.check_in_date} to {self.check_out_date}'
+        status = "Canceled" if self.canceled else "Active"
+        return f"Reservation ({status}) - {self.room.hotel.hotel_name} - {self.room.room_type}"
+
+    def clean(self):
+        if self.check_out_date <= self.check_in_date:
+            raise ValidationError("Check-out date must be after check-in date.")
+        
+    def cancel(self, reason=None):
+        """Cancel the booking and record the reason."""
+        self.canceled = True
+        self.cancellation_date = timezone.now()
+        self.cancellation_reason = reason
+        self.save()
     
 # CustomerReviews model for storing reviews from students
 class CustomerReviews(models.Model):

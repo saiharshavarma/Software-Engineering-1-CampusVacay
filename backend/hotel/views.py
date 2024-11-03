@@ -186,6 +186,10 @@ def hotel_registration(request):
             hotel_name = form.cleaned_data['hotel_name']
             phone_number = form.cleaned_data['phone_number']
             address = form.cleaned_data['address']
+            location = form.cleaned_data['location']
+            city = form.cleaned_data['city']
+            country = form.cleaned_data['country']
+            hotel_photos = form.cleaned_data['hotel_photos']
             description = form.cleaned_data['description']
             facilities = form.cleaned_data['facilities']
             check_in_time = form.cleaned_data['check_in_time']
@@ -219,6 +223,10 @@ def hotel_registration(request):
                 hotel_name=hotel_name,
                 phone_number=phone_number,
                 address=address,
+                location=location,
+                city=city,
+                country=country,
+                hotel_photos=hotel_photos,
                 description=description,
                 facilities=facilities,
                 check_in_time=check_in_time,

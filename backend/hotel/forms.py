@@ -11,6 +11,10 @@ class HotelRegistrationForm(forms.ModelForm):
     hotel_name = forms.CharField(max_length=255, required=True)
     phone_number = forms.CharField(max_length=12, required=True)
     address = forms.CharField(widget=forms.Textarea, required=True)
+    location = forms.CharField(widget=forms.Textarea, required=False)
+    city = forms.CharField(widget=forms.Textarea, required=True)
+    country = forms.CharField(widget=forms.Textarea, required=True)
+    hotel_photos = forms.FileField(required=True)
     description = forms.CharField(widget=forms.Textarea, required=False)
     facilities = forms.CharField(widget=forms.Textarea, required=False)
     check_in_time = forms.TimeField(required=True, initial="15:00")
@@ -22,7 +26,7 @@ class HotelRegistrationForm(forms.ModelForm):
     class Meta:
         model = Hotel
         fields = [
-            'hotel_name', 'phone_number', 'address', 'description', 'facilities', 
+            'hotel_name', 'phone_number', 'address', 'location' , 'city', 'country', 'hotel_photos', 'description', 'facilities',
             'check_in_time', 'check_out_time', 'cancellation_policy', 
             'student_discount', 'special_offers'
         ]

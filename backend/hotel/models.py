@@ -25,7 +25,8 @@ class Hotel(models.Model):
     address = models.TextField(verbose_name='Address')
     location = models.CharField(max_length=255)
     city = models.CharField(max_length=100)
-    country = models.CharField(max_length=100)
+    country = models.CharField(max_length=100, default="N/A")
+    hotel_photos = models.FileField(upload_to='hotel_photos/', verbose_name='Hotel Photos', help_text="Upload an image file", null=True, blank=True)
     
     # Phone number with validation
     phone_regex = RegexValidator(

@@ -3,22 +3,26 @@ from rest_framework import serializers
 from .models import Hotel, add_user_to_hotel_group, RoomsDescription, Reservation
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    hotel_name = serializers.CharField(max_length=255, required=True)
-    phone_number = serializers.CharField(max_length=12, required=True)
-    address = serializers.CharField(style={'base_template': 'textarea.html'}, required=True)
-    description = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
-    facilities = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
-    check_in_time = serializers.TimeField(default="15:00")
-    check_out_time = serializers.TimeField(default="11:00")
-    cancellation_policy = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True)
-    student_discount = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, default=0.00)
-    special_offers = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    hotel_name = serializers.CharField(max_length=255, required=True, write_only=True)
+    phone_number = serializers.CharField(max_length=12, required=True, write_only=True)
+    address = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, write_only=True)
+    location =serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
+    city = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, write_only=True)
+    country = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, write_only=True)
+    hotel_photos = serializers.FileField(required=True, allow_empty_file=False, write_only=True)
+    description = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
+    facilities = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
+    check_in_time = serializers.TimeField(default="15:00", write_only=True)
+    check_out_time = serializers.TimeField(default="11:00", write_only=True)
+    cancellation_policy = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
+    student_discount = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, default=0.00, write_only=True)
+    special_offers = serializers.CharField(max_length=255, required=False, allow_blank=True, write_only=True)
 
     class Meta:
         model = User
         fields = [
             'username', 'password', 'email',
-            'hotel_name', 'phone_number', 'address', 'description', 'facilities',
+            'hotel_name', 'phone_number', 'address', 'location', 'city', 'country', 'hotel_photos', 'description', 'facilities',
             'check_in_time', 'check_out_time', 'cancellation_policy',
             'student_discount', 'special_offers'
         ]
@@ -28,6 +32,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         hotel_name = validated_data.pop('hotel_name')
         phone_number = validated_data.pop('phone_number')
         address = validated_data.pop('address')
+        location = validated_data.pop('location')
+        city = validated_data.pop('city')
+        country = validated_data.pop('country')
+        hotel_photos = validated_data.pop('hotel_photos')
         description = validated_data.pop('description')
         facilities = validated_data.pop('facilities')
         check_in_time = validated_data.pop('check_in_time')
@@ -52,6 +60,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             hotel_name=hotel_name,
             phone_number=phone_number,
             address=address,
+            location=location,
+            city=city,
+            country=country,
+            hotel_photos=hotel_photos,
             description=description,
             facilities=facilities,
             check_in_time=check_in_time,

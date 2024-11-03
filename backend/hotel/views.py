@@ -80,14 +80,14 @@ class UpdateReservationView(UpdateAPIView):
 class HotelSearchView(APIView):
     def post(self, request):
         # Extract parameters from request body
-        destination = request.data.get('destination')
-        check_in_date = request.data.get('check_in_date')
-        check_out_date = request.data.get('check_out_date')
+        destination = request.data.get('location')
+        check_in_date = request.data.get('check_in')
+        check_out_date = request.data.get('check_out')
         guests = request.data.get('guests')
 
         # Validate input
         if not destination or not check_in_date or not check_out_date or not guests:
-            return Response({"error": "All fields (destination, check_in_date, check_out_date, guests) are required."},
+            return Response({"error": "All fields (location, check_in, check_out, guests) are required."},
                             status=status.HTTP_400_BAD_REQUEST)
 
         try:

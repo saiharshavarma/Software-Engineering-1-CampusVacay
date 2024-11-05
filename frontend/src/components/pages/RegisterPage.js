@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Register.css';
@@ -25,14 +23,18 @@ function RegisterPage() {
           password: '',
           email: '',
           hotel_name: '',
-          phone_number: '',
           address: '',
+          location: '',
+          city: '',
+          country: '',
+          hotel_photos: null,
+          phone_number: '',
           description: '',
           facilities: '',
-          check_in_time: null,
-          check_out_time: null,
+          check_in_time: '',
+          check_out_time: '',
           cancellation_policy: '',
-          student_discount: null,
+          student_discount: '',
           special_offers: ''
         }
   );
@@ -54,7 +56,7 @@ function RegisterPage() {
 
     const formDataToSend = new FormData();
     Object.keys(formData).forEach(key => {
-      if (key === 'university_id_proof') {
+      if (key === 'university_id_proof' || key === 'hotel_photos') {
         if (formData[key]) {
           formDataToSend.append(key, formData[key]);
         }
@@ -88,10 +90,11 @@ function RegisterPage() {
     setIsVisible(!isVisible);
   };
 
-  const renderField = (name, label, type = 'text') => (
+  const renderField = (name, label, type = 'text', helpText = '') => (
     <>
       <h2 className="label-wrapper">
         <label>{label}</label>
+        {helpText && <small className="help-text">{helpText}</small>}
       </h2>
       {type === 'textarea' ? (
         <textarea
@@ -138,14 +141,18 @@ function RegisterPage() {
                         password: '',
                         email: '',
                         hotel_name: '',
-                        phone_number: '',
                         address: '',
+                        location: '',
+                        city: '',
+                        country: '',
+                        hotel_photos: null,
+                        phone_number: '',
                         description: '',
                         facilities: '',
-                        check_in_time: null,
-                        check_out_time: null,
+                        check_in_time: '',
+                        check_out_time: '',
                         cancellation_policy: '',
-                        student_discount: null,
+                        student_discount: '',
                         special_offers: ''
                       }
                     : {
@@ -218,15 +225,30 @@ function RegisterPage() {
           ) : (
             <>
               {renderField('hotel_name', 'Hotel Name')}
+              {renderField('address', 'Address', 'textarea')}
+              {renderField('location', 'Location')}
+              {renderField('city', 'City')}
+              {renderField('country', 'Country')}
+              <h2 className="label-wrapper">
+                <label>Hotel Photos</label>
+                <small className="help-text">Upload an image file</small>
+              </h2>
+              <input
+                type="file"
+                id="hotel_photos"
+                className="input input__lg"
+                name="hotel_photos"
+                onChange={handleChange}
+                accept="image/*"
+              />
               {renderField('phone_number', 'Phone Number')}
-              {renderField('address', 'Address')}
-              {renderField('description', 'Description', 'textarea')}
-              {renderField('facilities', 'Facilities')}
+              {renderField('description', 'General Hotel Description', 'textarea')}
+              {renderField('facilities', 'Facilities', 'textarea', 'Comma-separated list of facilities, e.g., Wi-Fi, Pool, Parking')}
               {renderField('check_in_time', 'Check-in Time', 'time')}
               {renderField('check_out_time', 'Check-out Time', 'time')}
               {renderField('cancellation_policy', 'Cancellation Policy', 'textarea')}
-              {renderField('student_discount', 'Student Discount (%)', 'number')}
-              {renderField('special_offers', 'Special Offers', 'textarea')}
+              {renderField('student_discount', 'Student Discount (%)', 'number', 'Percentage discount for students')}
+              {renderField('special_offers', 'Special Offers')}
             </>
           )}
           <button type="submit" className="btn btn__primary btn__lg">

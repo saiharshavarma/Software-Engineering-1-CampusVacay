@@ -29,9 +29,9 @@ jobs:
 
       - name: Run Tests
         run: |
-          python manage.py test  # Modify path if manage.py is in a subfolder
+          python backend/manage.py test  # Modify path if manage.py is in a subfolder
 
-  # deploy:
+  # deploy:cd
   #   runs-on: ubuntu-latest
   #   needs: build
   #   if: github.ref == 'refs/heads/main' && success()

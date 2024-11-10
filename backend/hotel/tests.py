@@ -6,10 +6,7 @@ from student.models import Student
 from django.utils import timezone
 from datetime import datetime, date, timedelta
 from rest_framework.exceptions import ValidationError
-from .serializers import (
-    UserRegistrationSerializer, RoomSerializer, HotelSerializer,
-    ReservationSerializer, ReservationListSerializer, ReservationDetailSerializer
-)
+from .serializers import UserRegistrationSerializer, RoomSerializer, HotelSerializer, ReservationSerializer, ReservationListSerializer, ReservationDetailSerializer
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -19,12 +16,10 @@ class HotelModelTest(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        # Create user and hotel group
         cls.user = User.objects.create_user(username='testuser', password='testpass', email='user@example.com')
         hotel_group, _ = Group.objects.get_or_create(name='Hotels')
         cls.user.groups.add(hotel_group)
 
-        # Create Hotel instance
         cls.hotel = Hotel.objects.create(
             user=cls.user,
             hotel_name="Test Hotel",
@@ -53,10 +48,10 @@ class HotelModelTest(TestCase):
         hotel = Hotel(
             user=self.user,
             hotel_name="Invalid Phone Hotel",
-            phone_number="123456"  # Invalid
+            phone_number="123456"
         )
         with self.assertRaises(Exception):
-            hotel.full_clean()  # Should raise validation error
+            hotel.full_clean()
 
 
 class RoomsDescriptionModelTest(TestCase):
@@ -96,9 +91,7 @@ class ReservationModelTest(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        # Create hotel user
         cls.hotel_user = User.objects.create_user(username='hoteluser', password='password123')
-        # Create student user and profile
         cls.student_user = User.objects.create_user(username='studentuser', password='password123')
         cls.student = Student.objects.create(
             user=cls.student_user,
@@ -109,7 +102,6 @@ class ReservationModelTest(TestCase):
             date_joined=timezone.now()
         )
 
-        # Create hotel and room
         cls.hotel = Hotel.objects.create(
             user=cls.hotel_user,
             hotel_name="Test Hotel",
@@ -126,7 +118,6 @@ class ReservationModelTest(TestCase):
             max_occupancy=2
         )
 
-        # Create reservation
         cls.reservation = Reservation.objects.create(
             hotel=cls.hotel,
             room=cls.room,
@@ -157,12 +148,12 @@ class ReservationModelTest(TestCase):
         self.assertEqual(self.reservation.check_in_date, date.today())
         self.assertEqual(self.reservation.check_out_date, date.today() + timedelta(days=2))
         self.assertEqual(self.reservation.guests, 1)
-        self.assertFalse(self.reservation.canceled)  # Ensure reservation is not canceled initially
+        self.assertFalse(self.reservation.canceled)
 
     def test_check_out_after_check_in(self):
         self.reservation.check_out_date = self.reservation.check_in_date - timedelta(days=1)
         with self.assertRaises(Exception):
-            self.reservation.full_clean()  # Should raise validation error due to invalid dates
+            self.reservation.full_clean()
 
     def test_cancel_reservation(self):
         reason = "Change of plans"
@@ -176,7 +167,6 @@ class CustomerReviewsModelTest(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        # Create hotel user and hotel
         cls.hotel_user = User.objects.create_user(username='hoteluser', password='password123')
         cls.hotel = Hotel.objects.create(
             user=cls.hotel_user,
@@ -185,7 +175,6 @@ class CustomerReviewsModelTest(TestCase):
             phone_number="+11234567890"
         )
 
-        # Create student user and profile
         cls.student_user = User.objects.create_user(username='studentuser', password='password123')
         cls.student = Student.objects.create(
             user=cls.student_user,
@@ -196,7 +185,6 @@ class CustomerReviewsModelTest(TestCase):
             date_joined=timezone.now()
         )
 
-        # Create Customer Review
         cls.review = CustomerReviews.objects.create(
             hotel=cls.hotel,
             student=cls.student,
@@ -206,21 +194,19 @@ class CustomerReviewsModelTest(TestCase):
         )
 
     def test_review_creation(self):
-        """Test that a review is correctly created and all fields are set accurately."""
         self.assertEqual(self.review.hotel, self.hotel)
         self.assertEqual(self.review.student, self.student)
         self.assertEqual(self.review.rating, 4)
         self.assertEqual(self.review.review, "Great experience!")
         self.assertIsNotNone(self.review.date_added)
 
-        self.review.rating = 3  # Valid rating
+        self.review.rating = 3 
         try:
-            self.review.full_clean()  # Should pass without errors
+            self.review.full_clean()
         except Exception:
             self.fail("Review with valid rating raised unexpected exception.")
 
     def test_string_representation(self):
-        """Test the string representation of a review."""
         expected_str = f'Review by {self.student.user.username} for {self.hotel.hotel_name} - 4 stars on {self.review.date_added}'
         self.assertEqual(str(self.review), expected_str)
 
@@ -257,14 +243,9 @@ class UserRegistrationSerializerTest(TestCase):
         self.assertEqual(user.hotel_profile.hotel_name, "Test Hotel")
 
     def test_user_registration_serializer_invalid_phone(self):
-        # Provide a clearly invalid phone number format
         self.user_data["phone_number"] = "123ABC"
         serializer = UserRegistrationSerializer(data=self.user_data)
         is_valid = serializer.is_valid()
-        # Print errors for debugging if validation does not catch the error
-        if is_valid:
-            print("Unexpectedly valid data:", serializer.errors)
-        
         self.assertFalse(is_valid, "Serializer should be invalid for incorrect phone number format.")
         self.assertIn("phone_number", serializer.errors)
 
@@ -326,7 +307,7 @@ class HotelSerializerTest(TestCase):
         data = serializer.data
         self.assertEqual(data["hotel_name"], "Test Hotel")
         self.assertEqual(data["facilities"], "Wi-Fi, Pool")
-        self.assertEqual(len(data["rooms"]), 1)  # Ensure rooms are serialized
+        self.assertEqual(len(data["rooms"]), 1)
 
 
 class ReservationSerializerTest(TestCase):
@@ -467,12 +448,10 @@ class LoginLogoutViewTest(TestCase):
         self.assertIn("non_field_errors", response.data)
 
     def test_logout(self):
-        # First log the user in to get a token
         login_response = self.client.post(self.login_url, {"username": "testuser", "password": "testpass"})
         token = login_response.data["token"]
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
         
-        # Now log the user out
         response = self.client.post(self.logout_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("message", response.data)
@@ -483,11 +462,9 @@ class HotelDashboardViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         
-        # Set up user and hotel
         self.user = User.objects.create_user(username="hoteluser", password="password123")
         self.hotel = Hotel.objects.create(user=self.user, hotel_name="Test Hotel", city="Test City", phone_number="+11234567890")
         
-        # Set up student user and profile
         self.student_user = User.objects.create_user(username="studentuser", password="password123")
         self.student = Student.objects.create(
             user=self.student_user,
@@ -496,7 +473,6 @@ class HotelDashboardViewTest(TestCase):
             university_name="Test University"
         )
         
-        # Set up room and reservation
         self.room = RoomsDescription.objects.create(
             hotel=self.hotel,
             room_type="Single",
@@ -519,7 +495,6 @@ class HotelDashboardViewTest(TestCase):
             guests=1
         )
 
-        # Authenticate as hotel user
         self.client.force_authenticate(user=self.user)
         self.url = reverse('hotel-dashboard')
 
@@ -527,7 +502,6 @@ class HotelDashboardViewTest(TestCase):
         response = self.client.get(self.url, {'date': date.today().strftime('%Y-%m-%d')})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Directly check the first dictionary in the response list
         self.assertEqual(len(response.data), 1)
         reservation_data = response.data[0]
         
@@ -574,7 +548,6 @@ class HotelSearchViewTest(TestCase):
     def test_hotel_search_missing_fields(self):
         response = self.client.post(self.search_url, {
             "location": "Test City",
-            # Missing check_in, check_out, and guests
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", response.data)
@@ -585,11 +558,9 @@ class RoomBookingViewTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         
-        # Create hotel and student users
         self.hotel_user = User.objects.create_user(username="hoteluser", password="password123")
         self.student_user = User.objects.create_user(username="studentuser", password="password123")
         
-        # Create student profile
         self.student = Student.objects.create(
             user=self.student_user,
             dob=date(2000, 1, 1),
@@ -597,7 +568,6 @@ class RoomBookingViewTest(TestCase):
             university_name="Test University"
         )
         
-        # Create hotel and room
         self.hotel = Hotel.objects.create(
             user=self.hotel_user, 
             hotel_name="Test Hotel", 
@@ -611,17 +581,15 @@ class RoomBookingViewTest(TestCase):
             price_per_night=100.00
         )
         
-        # Authenticate as student
         self.client.force_authenticate(user=self.student_user)
         
-        # Set booking URL
         self.booking_url = reverse('book-room', args=[self.hotel.id, self.room.id])
 
     def test_room_booking_success(self):
         response = self.client.post(self.booking_url, {
-            "hotel": self.hotel.id,  # Explicitly include hotel
-            "room": self.room.id,     # Explicitly include room
-            "student": self.student.id,  # Explicitly include student
+            "hotel": self.hotel.id,
+            "room": self.room.id,
+            "student": self.student.id,
             "first_name": "John",
             "last_name": "Doe",
             "email": "johndoe@example.com",
@@ -638,9 +606,9 @@ class RoomBookingViewTest(TestCase):
 
     def test_room_booking_invalid_dates(self):
         response = self.client.post(self.booking_url, {
-            "hotel": self.hotel.id,  # Explicitly include hotel
-            "room": self.room.id,     # Explicitly include room
-            "student": self.student.id,  # Explicitly include student
+            "hotel": self.hotel.id,
+            "room": self.room.id,
+            "student": self.student.id,
             "first_name": "John",
             "last_name": "Doe",
             "email": "johndoe@example.com",
@@ -648,9 +616,8 @@ class RoomBookingViewTest(TestCase):
             "phone_number": "+123456789",
             "expected_arrival_time": "15:00",
             "check_in_date": date.today().isoformat(),
-            "check_out_date": (date.today() - timedelta(days=1)).isoformat(),  # Invalid date
+            "check_out_date": (date.today() - timedelta(days=1)).isoformat(),
             "guests": 1
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        # Check for non-field error related to date validation
         self.assertIn("non_field_errors", response.data)

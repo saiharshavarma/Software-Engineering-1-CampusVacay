@@ -4,7 +4,7 @@ Brotli
 certifi
 charset-normalizer 
 Django
-django-cors-headers==4.4.0
+django-cors-headers
 django-rest-auth
 django-rest-authtoken==2.1.4
 djangorestframework

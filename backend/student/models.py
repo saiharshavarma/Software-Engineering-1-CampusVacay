@@ -43,6 +43,7 @@ class Student(models.Model):
         null=True
     )
 
+    favorite_hotels = models.ManyToManyField('hotel.Hotel', related_name='favorite_students', blank=True)
     # Additional fields
     date_joined = models.DateTimeField(default=timezone.now, verbose_name='Date Joined')
 

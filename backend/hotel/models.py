@@ -98,7 +98,13 @@ class Reservation(models.Model):
     phone_number = models.CharField(max_length=15)
     expected_arrival_time = models.TimeField()
     special_requests = models.TextField(blank=True, null=True)
+
     payment_mode = models.CharField(max_length=50, choices=[('card', 'Card'), ('cash', 'Cash')], default='card')
+    damage_insurance = models.BooleanField(default=False)
+    stripe_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    currency = models.CharField(max_length=3, default='usd')
+    payment_status = models.CharField(max_length=20, choices=[('Pending', 'Pending'), ('Paid', 'Paid'), ('Failed', 'Failed')], default='Pending')
 
     check_in_date = models.DateField()
     check_out_date = models.DateField()
@@ -108,6 +114,7 @@ class Reservation(models.Model):
     room_number = models.CharField(max_length=10, blank=True, null=True)  # Room number on check-in
     checked_in = models.BooleanField(default=False)  # Check-in status
     additional_charges = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Track extra charges
+    damage_report = models.TextField(blank=True, null=True)
 
     # New fields for cancellation logic
     canceled = models.BooleanField(default=False)

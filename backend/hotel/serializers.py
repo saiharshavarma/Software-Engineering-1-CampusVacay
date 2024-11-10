@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import Hotel, add_user_to_hotel_group, RoomsDescription, Reservation
+import re
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     hotel_name = serializers.CharField(max_length=255, required=True, write_only=True)
@@ -75,6 +76,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         hotel.full_clean()
         hotel.save()
         return user
+    
+    def validate_phone_number(self, value):
+        # Check if the phone number is in the format +1 followed by 10 to 12 digits or just 10 to 12 digits without +1
+        if not re.fullmatch(r'(\+1)?\d{10,12}$', value):
+            raise serializers.ValidationError("Phone number must be in the format +1 followed by 10 to 12 digits, or just 10 to 12 digits.")
+        return value
 
 class RoomSerializer(serializers.ModelSerializer):
     class Meta:
@@ -92,16 +99,28 @@ class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields = [
-            'room', 'student', 'first_name', 'last_name', 'email',
+            'hotel', 'room', 'student', 'first_name', 'last_name', 'email',
             'country', 'phone_number', 'expected_arrival_time', 
             'special_requests', 'payment_mode', 'check_in_date', 
             'check_out_date', 'guests'
         ]
 
     def validate(self, data):
+        check_in_date = data.get('check_in_date')
+        check_out_date = data.get('check_out_date')
+        
+        # Ensure both check-in and check-out dates are provided
+        if not check_in_date or not check_out_date:
+            raise serializers.ValidationError({
+                'check_in_date': 'Check-in date is required.' if not check_in_date else '',
+                'check_out_date': 'Check-out date is required.' if not check_out_date else ''
+            })
+
         # Ensure check-out date is after check-in date
-        if data['check_out_date'] <= data['check_in_date']:
-            raise serializers.ValidationError("Check-out date must be after check-in date.")
+        if check_out_date <= check_in_date:
+            raise serializers.ValidationError(
+                f"Check-out date ({check_out_date}) must be after check-in date ({check_in_date})."
+            )
         
         # Optional: Add logic to check room availability
 

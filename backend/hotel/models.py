@@ -89,14 +89,15 @@ class RoomsDescription(models.Model):
         return f'{self.hotel.hotel_name} - {self.room_type}'
     
 class Reservation(models.Model):
-    room = models.ForeignKey(RoomsDescription, on_delete=models.CASCADE, related_name='reservations')
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='reservations')
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='hotel_reservations')
+    room = models.ForeignKey(RoomsDescription, on_delete=models.CASCADE, related_name='room_reservations')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='student_reservations')
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     email = models.EmailField()
     country = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15)
-    expected_arrival_time = models.TimeField()
+    expected_arrival_time = models.TimeField(blank = True, null = True)
     special_requests = models.TextField(blank=True, null=True)
 
     payment_mode = models.CharField(max_length=50, choices=[('card', 'Card'), ('cash', 'Cash')], default='card')

@@ -156,14 +156,14 @@ class RoomBookingView(APIView):
     def post(self, request, hotel_id, room_id):
         try:
             room = RoomsDescription.objects.get(id=room_id, hotel__id=hotel_id)
+            hotel = Hotel.objects.get(id=hotel_id)
         except RoomsDescription.DoesNotExist:
             return Response({"error": "Room not found."}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = ReservationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(student=request.user.student_profile, room=room)
+            serializer.save(student=request.user.student_profile, room=room, hotel=hotel)
             return Response({"message": "Room booked successfully!", "data": serializer.data}, status=status.HTTP_201_CREATED)
-        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class HotelManagerReservations(ListAPIView):

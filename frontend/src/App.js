@@ -6,6 +6,8 @@ import SearchPage from './components/pages/SearchPage';
 import LoginPage from './components/pages/LoginPage';
 import RegisterPage from './components/pages/RegisterPage';
 import HotelRegister from './components/pages/HotelRegister';
+import HotelDetails from './components/pages/HotelDetails.js';
+
 
 
 function App() {
@@ -17,6 +19,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/register/hotel" element={<HotelRegister />} />
+        <Route path="/hoteldetails" element={<HotelDetails />} />
       </Routes>
     </Router>
   );

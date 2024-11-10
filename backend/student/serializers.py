@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import Student, add_user_to_student_group
+import re
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     dob = serializers.DateField(write_only=True, input_formats=['%Y-%m-%d', '%m/%d/%Y', '%d-%m-%Y'] )
@@ -45,6 +46,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         student.full_clean()
         student.save()
         return user
+    
+    def validate_phone_number(self, value):
+        # Check if the phone number is in the format +1 followed by 10 to 12 digits or just 10 to 12 digits without +1
+        if not re.fullmatch(r'(\+1)?\d{10,12}$', value):
+            raise serializers.ValidationError("Phone number must be in the format +1 followed by 10 to 12 digits, or just 10 to 12 digits.")
+        return value
     
 class StudentProfileSerializer(serializers.ModelSerializer):
     class Meta:

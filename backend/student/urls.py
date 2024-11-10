@@ -4,7 +4,7 @@ from .views import UserRegistrationView, LogoutView, StudentSearchView, StudentP
 from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [
-    path('api/register/', UserRegistrationView.as_view(), name='user-register'),
+    path('api/register/', UserRegistrationView.as_view(), name='student-user-register'),
     path('api/login/', obtain_auth_token, name='api_login'),
     path('api/logout/', LogoutView.as_view(), name='api_logout'),
     path('api/<int:hotel_id>/rooms/', views.view_room_details, name='view_room_details'),

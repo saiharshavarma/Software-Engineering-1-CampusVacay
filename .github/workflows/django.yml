@@ -25,11 +25,11 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r /backend/requirements.txt  # Modify path if requirements.txt is in a subfolder
+          pip install -r backend/requirements.txt  # Modify path if requirements.txt is in a subfolder
 
       - name: Run Tests
         run: |
-          python manage.py test  # Modify path if manage.py is in a subfolder
+          python backend/manage.py test  # Modify path if manage.py is in a subfolder
           
   # deploy:
   #   runs-on: ubuntu-latest

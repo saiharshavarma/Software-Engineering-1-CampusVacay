@@ -66,7 +66,7 @@ jobs:
           EC2_SSH_KEY: ${{ secrets.PRIVATE_KEY }}
         run: |
           # Connect to EC2 and deploy
-          ssh -i ${{ secrets.PRIVATE_KEY }} -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             echo "Connecting to EC2 and deploying application..."
 
             # Navigate to your project directory on the EC2 instance

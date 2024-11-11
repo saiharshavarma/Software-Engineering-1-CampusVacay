@@ -44,11 +44,17 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: '3.12'  # Use the version compatible with your EC2 deployment
+      - name: Set up SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          printf "%s" "${{ secrets.PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+        shell: bash
 
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
+          pip install -r Software-Engineering-1-CampusVacay/backend/requirements.txt
 
       - name: Deploy to EC2
         env:

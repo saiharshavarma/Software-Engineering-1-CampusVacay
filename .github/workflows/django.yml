@@ -58,6 +58,7 @@ jobs:
 
       - name: Deploy to EC2
         env:
+        
           #DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
           #ENV_VARIABLES: ${{ secrets.ENV_VARIABLES }}
           EC2_HOST: ${{ secrets.EC2_HOST }}

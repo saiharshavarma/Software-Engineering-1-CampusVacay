@@ -43,7 +43,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: '3.9, 3.11, 3.12'  # Use the version compatible with your EC2 deployment
+          python-version: '3.12'  # Use the version compatible with your EC2 deployment
 
       - name: Install Dependencies
         run: |

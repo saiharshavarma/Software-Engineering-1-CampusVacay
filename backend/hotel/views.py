@@ -139,6 +139,7 @@ class HotelSearchView(APIView):
                     available_hotels[hotel.hotel_name] = {
                         "hotel_id": hotel.id,
                         "hotel_name": hotel.hotel_name,
+                        "hotel_photo": hotel.hotel_photos,
                         "address": hotel.address,
                         "description": hotel.description,
                         "facilities": hotel.facilities,

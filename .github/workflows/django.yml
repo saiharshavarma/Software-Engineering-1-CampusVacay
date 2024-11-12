@@ -2,9 +2,9 @@ name: Django CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -27,11 +27,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt  # Modify path if requirements.txt is in a subfolder
 
-      # - name: Run Tests
-      #   run: |
-      #     cd backend
-      #     python manage.py test  # Modify path if manage.py is in a subfolder
-          
+      - name: Run Tests
+        run: |
+          cd backend
+          python manage.py test  # Modify path if manage.py is in a subfolder
+
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -43,7 +43,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: '3.12'  # Use the version compatible with your EC2 deployment
+          python-version: "3.12" # Use the version compatible with your EC2 deployment
       - name: Set up SSH Key
         run: |
           mkdir -p ~/.ssh
@@ -58,7 +58,6 @@ jobs:
 
       - name: Deploy to EC2
         env:
-        
           #DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
           #ENV_VARIABLES: ${{ secrets.ENV_VARIABLES }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -73,7 +72,8 @@ jobs:
             cd Software-Engineering-1-CampusVacay/backend  # Replace with the actual path
 
             # Pull latest code
-            git pull origin main
+            git fetch --all
+            git reset --hard origin/main
 
             # Activate virtual environment
             source env/bin/activate

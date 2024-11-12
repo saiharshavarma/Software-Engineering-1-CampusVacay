@@ -30,7 +30,7 @@ jobs:
       - name: Run Tests
         run: |
           cd backend
-          python manage.py test  # Modify path if manage.py is in a subfolder
+          python manage.py test --noinput # Modify path if manage.py is in a subfolder
 
   deploy:
     runs-on: ubuntu-latest

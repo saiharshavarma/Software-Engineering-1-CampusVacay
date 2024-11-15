@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import Student, add_user_to_student_group
 import re
+from datetime import date
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     dob = serializers.DateField(write_only=True, input_formats=['%Y-%m-%d', '%m/%d/%Y', '%d-%m-%Y'] )
@@ -47,6 +48,26 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         student.save()
         return user
     
+    def validate(self, data):
+        # Age validation
+        dob = data.get('dob')
+        if dob:
+            age = self.calculate_age(dob)
+            if age >= 28:
+                raise serializers.ValidationError("User must be a student to register.")
+
+        # Email domain validation
+        email = data.get('email')
+        if email and not email.endswith('.edu'):
+            raise serializers.ValidationError("Email must end with '.edu' for registration.")
+
+        return data
+
+    def calculate_age(self, dob):
+        today = date.today()
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        return age
+
     def validate_phone_number(self, value):
         # Check if the phone number is in the format +1 followed by 10 to 12 digits or just 10 to 12 digits without +1
         if not re.fullmatch(r'(\+1)?\d{10,12}$', value):

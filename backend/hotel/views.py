@@ -102,7 +102,7 @@ class HotelSearchView(APIView):
         )
 
         # Filter by room capacity (guests)
-        queryset = queryset.filter(rooms__max_occupancy__gte=guests)
+        #queryset = queryset.filter(rooms__max_occupancy__gte=guests)
 
         available_hotels = {}
 
@@ -113,25 +113,26 @@ class HotelSearchView(APIView):
             available_rooms = []
 
             for room in hotel_rooms:
+                if int(room.max_occupancy) >= int(guests):
                 # Count how many rooms of this type are already booked for the given date range
-                booked_rooms = Reservation.objects.filter(
-                    room=room,
-                    check_in_date__lte=check_out_date,
-                    check_out_date__gte=check_in_date
-                ).count()
+                    booked_rooms = Reservation.objects.filter(
+                        room=room,
+                        check_in_date__lte=check_out_date,
+                        check_out_date__gte=check_in_date
+                    ).count()
 
-                # Calculate available rooms
-                available_room_count = room.number_of_rooms - booked_rooms
+                    # Calculate available rooms
+                    available_room_count = room.number_of_rooms - booked_rooms
 
-                if available_room_count > 0:
-                    room_data = {
-                        "room_type": room.room_type,
-                        "available_rooms": available_room_count,
-                        "price_per_night": room.price_per_night,
-                        "facilities": room.facilities,
-                        "max_occupancy": room.max_occupancy
-                    }
-                    available_rooms.append(room_data)
+                    if available_room_count > 0:
+                        room_data = {
+                            "room_type": room.room_type,
+                            "available_rooms": available_room_count,
+                            "price_per_night": room.price_per_night,
+                            "facilities": room.facilities,
+                            "max_occupancy": room.max_occupancy
+                        }
+                        available_rooms.append(room_data)
 
             # Only add the hotel if there are available rooms
             if available_rooms:

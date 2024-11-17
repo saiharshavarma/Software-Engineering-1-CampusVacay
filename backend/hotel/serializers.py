@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Hotel, add_user_to_hotel_group, RoomsDescription, Reservation
+from .models import Hotel, add_user_to_hotel_group, RoomsDescription, Reservation, CustomerReviews
 import re
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import UserRegistrationView, LogoutView, HotelSearchView, RoomBookingView, HotelManagerReservations, HotelDashboardView, UpdateReservationView, CancelReservationView
+from .views import UserRegistrationView, LogoutView, HotelSearchView, RoomBookingView, HotelManagerReservations, HotelDashboardView, UpdateReservationView, CancelReservationView, CreatePaymentIntentView
 from rest_framework.authtoken.views import obtain_auth_token
 
 # urlpatterns = [

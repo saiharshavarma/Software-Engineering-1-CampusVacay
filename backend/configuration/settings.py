@@ -57,16 +57,19 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-from django.middleware.common import MiddlewareMixin
+from django.middleware.security import SecurityMiddleware
 
-class RelaxReferrerPolicyMiddleware(MiddlewareMixin):
-    def process_response(self, request, response):
-        response["Referrer-Policy"] = "no-referrer-when-downgrade"
+class CustomSecurityMiddleware(SecurityMiddleware):
+    def process_request(self, request):
+        response = super().process_request(request)
+        response['Referrer-Policy'] = 'no-referrer-when-downgrade'
         return response
 
 ROOT_URLCONF = 'configuration.urls'
 
 CORS_ALLOW_ALL_ORIGINS = True 
+
+SECURE_SSL_REDIRECT = False 
 
 TEMPLATES = [
     {

@@ -175,4 +175,4 @@ APPEND_SLASH = False
 # for stripe api. secret key
 STRIPE_SECRET_KEY = 'sk_test_51QKSTAJKisXYkEU9MMLSSNQNT8dkf3qPja8vMrdOQ3eDE2vkpOwO2iprAMXdtxAFPVJVsjjfLRl7Z0FW5rC89due00V4a5jvVp'
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'https://campus-vacay-frontend.vercel.app']
+#CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'https://campus-vacay-frontend.vercel.app']

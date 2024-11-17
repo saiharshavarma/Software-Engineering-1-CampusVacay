@@ -57,6 +57,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+from django.middleware.common import MiddlewareMixin
+
+class RelaxReferrerPolicyMiddleware(MiddlewareMixin):
+    def process_response(self, request, response):
+        response["Referrer-Policy"] = "no-referrer-when-downgrade"
+        return response
+
 ROOT_URLCONF = 'configuration.urls'
 
 CORS_ALLOW_ALL_ORIGINS = True 
@@ -146,8 +153,26 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True  # If you're using cookies or sessions
+
+CORS_ALLOW_HEADERS = [
+    'content-type',
+    'authorization',
+]
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS',
+]
+
+APPEND_SLASH = False
+
+# for stripe api. secret key
+STRIPE_SECRET_KEY = 'sk_test_51QKSTAJKisXYkEU9MMLSSNQNT8dkf3qPja8vMrdOQ3eDE2vkpOwO2iprAMXdtxAFPVJVsjjfLRl7Z0FW5rC89due00V4a5jvVp'
 
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'https://campus-vacay-frontend.vercel.app']

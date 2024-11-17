@@ -141,8 +141,8 @@ class Reservation(models.Model):
 class CustomerReviews(models.Model):
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='hotel_reviews')
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='student_reviews')
-    rating = models.PositiveSmallIntegerField(verbose_name='Rating', help_text="Rate between 1 to 5 stars")
-    review = models.TextField(verbose_name='Review', blank=True)
+    rating = models.PositiveSmallIntegerField(verbose_name='Rating', help_text="Rate between 1 to 5 stars", default=0)
+    review = models.TextField(verbose_name='Review', blank=True, default="")
     date_added = models.DateTimeField(default=timezone.now, verbose_name='Date Added')
 
     def __str__(self):

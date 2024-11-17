@@ -9,9 +9,8 @@ from .models import Hotel, RoomsDescription, CustomerReviews, Reservation
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from .serializers import UserRegistrationSerializer, ReservationSerializer, ReservationListSerializer, ReservationDetailSerializer, RoomSerializer, ReviewSerializer
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework import generics, status
@@ -20,6 +19,7 @@ from rest_framework.generics import ListAPIView, UpdateAPIView
 from django.db.models import Q
 from datetime import datetime
 import stripe
+from rest_framework.viewsets import ModelViewSet
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -287,50 +287,101 @@ class CreatePaymentIntentView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class RoomViewSet(ModelViewSet):
+    """
+    Handles viewing, adding, updating, and deleting rooms for hotels.
+    """
+    queryset = RoomsDescription.objects.all()
+    serializer_class = RoomSerializer
 
-class RoomsInfoView(APIView):
-    def get(self, request, hotel_id):
-        hotel = get_object_or_404(Hotel, id=hotel_id)
-        rooms = RoomsDescription.objects.filter(hotel=hotel)
-        serializer = RoomSerializer(data=rooms)
-        # Return serialized data as JSON response
-        return Response({
-            'hotel': {'id': hotel.id, 'name': hotel.name},  # Include hotel info
-            'rooms': serializer.data  # Include serialized room data
-        }, status=status.HTTP_200_OK)
-    
-    
-    def post(self, request, hotel_id):
-        # Get the hotel object
-        hotel = get_object_or_404(Hotel, id=hotel_id)
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticated()]  # Only hotel managers can modify rooms
+        return [AllowAny()]  # Anyone can view rooms
+
+    def get_queryset(self):
+        """
+        Automatically filter rooms for the hotel managed by the logged-in user.
+        """
+        if self.request.user.is_authenticated and self.request.user.groups.filter(name='Hotels').exists():
+            # Hotel manager is logged in
+            hotel = get_object_or_404(Hotel, user=self.request.user)
+            queryset = RoomsDescription.objects.filter(hotel=hotel)
+            print(f"DEBUG: Rooms for hotel {hotel.id}: {queryset}")
+            return queryset
+        elif 'hotel_id' in self.request.query_params:
+            # Filter rooms by hotel_id passed as query parameter
+            hotel_id = self.request.query_params.get('hotel_id')
+            hotel = get_object_or_404(Hotel, id=hotel_id)
+            queryset = RoomsDescription.objects.filter(hotel=hotel)
+            print(f"DEBUG: Rooms filtered by hotel_id={hotel_id}: {queryset}")
+            return queryset
+        else:
+            print("DEBUG: Returning all rooms (no filters applied).")
+            return super().get_queryset()
+
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
         
-        # Add hotel reference to the incoming data
-        data = request.data.copy()
-        data['hotel'] = hotel.id  # Include hotel ID in the data for serialization
-
-        # Use a serializer to validate and save the data
-        serializer = RoomSerializer(data=data)
+        # Automatically associate the logged-in user's hotel
+        hotel = get_object_or_404(Hotel, user=self.request.user)
+        data = request.data.copy()  # Make a mutable copy of the request data
+        data['hotel'] = hotel.id  # Assign the hotel's ID to the data
+        
+        serializer = self.get_serializer(data=data)
         if serializer.is_valid():
-            serializer.save()  # Save the validated data to the database
-            return Response({"message": "Room details added successfully!", "data": serializer.data}, status=status.HTTP_201_CREATED)
-        
-        # If validation fails, return errors
+            serializer.save(hotel=hotel)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, room_id):
-        room = get_object_or_404(RoomsDescription, id=room_id)
-        room.delete()
-        return Response({"message": "Room details deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
-    
-    def put(self, request, room_id):
-        room = get_object_or_404(RoomsDescription, id=room_id)
-        serializer = RoomSerializer(room, data=request.data, partial=True)
+    def update(self, request, *args, **kwargs):
+        """
+        Custom implementation for updating a room.
+        Ensures the room belongs to the logged-in user's hotel.
+        """
+        room = self.get_object()  # Get the room instance being updated
+        if room.hotel.user != self.request.user:
+            raise PermissionDenied("You are not authorized to update this room.")
 
+        # Deserialize and validate the updated data
+        serializer = self.get_serializer(room, data=request.data, partial=False)
         if serializer.is_valid():
             serializer.save()
-            return Response({"message": "Room details updated successfully!", "data": serializer.data}, status=status.HTTP_200_OK)
-        
-        return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # Return validation errors
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Custom implementation for partial updating a room.
+        Allows updating specific fields without sending all data.
+        """
+        room = self.get_object()
+        if room.hotel.user != self.request.user:
+            raise PermissionDenied("You are not authorized to update this room.")
+
+        # Deserialize and validate the updated data
+        serializer = self.get_serializer(room, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # Return validation errors
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Custom implementation for deleting a room.
+        Ensures the room belongs to the logged-in user's hotel.
+        """
+        room = self.get_object()  # Get the room instance being deleted
+        if room.hotel.user != self.request.user:
+            raise PermissionDenied("You are not authorized to delete this room.")
+
+        room.delete()  # Perform the deletion
+        return Response({"message": "Room deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
 
 
 # def view_room_details(request, hotel_id):
@@ -400,50 +451,203 @@ class RoomsInfoView(APIView):
 
 #     return render(request, 'delete_room.html', {'room': room})
 
-class HotelReviewsAPIView(APIView):
-    def get(self, request, hotel_id):
-        """View all reviews for a specific hotel."""
+class ReviewViewSet(ModelViewSet):
+    """
+    Handles reviews for hotels:
+    - Students: Create, update, partial_update, delete their own reviews.
+    - Hotels: View all reviews for their hotel.
+    """
+    queryset = CustomerReviews.objects.all()
+    serializer_class = ReviewSerializer
+
+    def get_permissions(self):
+        """
+        Set permissions based on actions.
+        - Authenticated students can create, update, and delete reviews.
+        - Hotels can only view reviews.
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticated()]  # Students must be authenticated
+        return [AllowAny()]  # Everyone can view reviews
+
+    def get_queryset(self):
+        """
+        Automatically filter reviews based on the logged-in user's role.
+        - Students: Return their own reviews.
+        - Hotels: Return all reviews for their hotel.
+        """
+        if self.request.user.groups.filter(name='Hotels').exists():
+            # Logged-in user is a hotel manager
+            hotel = get_object_or_404(Hotel, user=self.request.user)
+            return CustomerReviews.objects.filter(hotel=hotel)
+        elif self.request.user.groups.filter(name='Students').exists():
+            # Logged-in user is a student
+            return CustomerReviews.objects.filter(student=self.request.user.student_profile)
+        elif 'hotel_id' in self.request.query_params:
+            # If a hotel_id is provided, filter reviews for that hotel
+            hotel_id = self.request.query_params.get('hotel_id')
+            hotel = get_object_or_404(Hotel, id=hotel_id)
+            return CustomerReviews.objects.filter(hotel=hotel)
+        return super().get_queryset()
+
+    def create(self, request, *args, **kwargs):
+        """
+        Students create a new review for a hotel.
+        """
+        if not request.user.groups.filter(name='Students').exists():
+            raise PermissionDenied("Only students can create reviews.")
+
+        # Get the hotel instance
+        hotel_id = request.data.get('hotel_id')
+        if not hotel_id:
+            return Response({"error": "hotel_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
         hotel = get_object_or_404(Hotel, id=hotel_id)
-        reviews = CustomerReviews.objects.filter(hotel=hotel)
-        serializer = ReviewSerializer(reviews, many=True)
-        return Response({"hotel": hotel.name, "reviews": serializer.data}, status=status.HTTP_200_OK)
 
-    def post(self, request, hotel_id):
-        """Create a new review for a specific hotel."""
-        hotel = get_object_or_404(Hotel, id=hotel_id)
-        student = request.user.student_profile
+        # Serialize and validate data
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(hotel=hotel, student=request.user.student_profile)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        data = request.data.copy()
-        data["hotel"] = hotel.id
-        data["student"] = student.id
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ReviewSerializer(data=data)
+    def update(self, request, *args, **kwargs):
+        """
+        Students can fully update their own reviews.
+        """
+        review = self.get_object()
+        if review.student != request.user.student_profile:
+            raise PermissionDenied("You are not authorized to update this review.")
+
+        # Serialize and validate updated data
+        serializer = self.get_serializer(review, data=request.data, partial=False)
         if serializer.is_valid():
             serializer.save()
-            return Response({"message": "Review added successfully!", "review": serializer.data}, status=status.HTTP_201_CREATED)
-        return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def put(self, request, review_id):
-        """Edit an existing review."""
-        review = get_object_or_404(CustomerReviews, id=review_id)
-        if request.user.student_profile != review.student:
-            raise PermissionDenied()
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ReviewSerializer(review, data=request.data, partial=True)
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Students can partially update their own reviews.
+        """
+        review = self.get_object()
+        if review.student != request.user.student_profile:
+            raise PermissionDenied("You are not authorized to update this review.")
+
+        # Serialize and validate updated data
+        serializer = self.get_serializer(review, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({"message": "Review updated successfully!", "review": serializer.data}, status=status.HTTP_200_OK)
-        return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def delete(self, request, review_id):
-        """Delete an existing review."""
-        review = get_object_or_404(CustomerReviews, id=review_id)
-        if request.user.student_profile != review.student:
-            raise PermissionDenied()
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Students can delete their own reviews.
+        """
+        review = self.get_object()
+        if review.student != request.user.student_profile:
+            raise PermissionDenied("You are not authorized to delete this review.")
 
         review.delete()
         return Response({"message": "Review deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
+    """
+    Handles viewing, adding, updating, and deleting reviews for hotels.
+    """
+    queryset = CustomerReviews.objects.all()
+    serializer_class = ReviewSerializer
 
+    def get_permissions(self):
+        """
+        Set permissions based on actions.
+        Authenticated users can create, update, or delete reviews.
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticated()]
+        return [AllowAny()]  # Everyone can view reviews
+
+    def get_queryset(self):
+        """
+        Automatically filter reviews by hotel associated with the logged-in user or a given hotel_id.
+        """
+        if self.request.user.is_authenticated and self.request.user.groups.filter(name='Hotels').exists():
+            # Logged-in user is a hotel manager
+            hotel = get_object_or_404(Hotel, user=self.request.user)
+            return CustomerReviews.objects.filter(hotel=hotel)
+        elif 'hotel_id' in self.request.query_params:
+            # Filter reviews by hotel_id if provided in query params
+            hotel_id = self.request.query_params.get('hotel_id')
+            hotel = get_object_or_404(Hotel, id=hotel_id)
+            return CustomerReviews.objects.filter(hotel=hotel)
+        return super().get_queryset()
+
+    def create(self, request, *args, **kwargs):
+        """
+        Create a new review for a hotel.
+        """
+        if not request.user.is_authenticated:
+            return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Get the hotel instance
+        hotel_id = request.data.get('hotel_id')
+        if not hotel_id:
+            return Response({"error": "hotel_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        hotel = get_object_or_404(Hotel, id=hotel_id)
+
+        # Serialize and validate data
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(hotel=hotel, student=request.user.student_profile)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, *args, **kwargs):
+        """
+        Full update of a review (all fields are required).
+        """
+        review = self.get_object()
+        if review.student != request.user.student_profile:
+            raise PermissionDenied("You are not authorized to update this review.")
+
+        # Serialize and validate updated data
+        serializer = self.get_serializer(review, data=request.data, partial=False)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Partial update of a review (only specified fields are updated).
+        """
+        review = self.get_object()
+        if review.student != request.user.student_profile:
+            raise PermissionDenied("You are not authorized to update this review.")
+
+        # Serialize and validate updated data
+        serializer = self.get_serializer(review, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Delete a review.
+        """
+        review = self.get_object()
+        if review.student != request.user.student_profile:
+            raise PermissionDenied("You are not authorized to delete this review.")
+
+        review.delete()
+        return Response({"message": "Review deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
 
 # def view_hotel_reviews(request, hotel_id):
 #     hotel = get_object_or_404(Hotel, id=hotel_id)

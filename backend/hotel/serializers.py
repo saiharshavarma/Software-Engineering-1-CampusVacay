@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Hotel, add_user_to_hotel_group, RoomsDescription, Reservation
+from .models import Hotel, add_user_to_hotel_group, RoomsDescription, Reservation, CustomerReviews
 import re
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -155,4 +155,5 @@ class ReservationDetailSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerReviews
-        fields = ['id', 'hotel', 'student', 'rating', 'review', 'created_at', 'updated_at']
+        fields = "__all__"
+        read_only_fields = ['hotel', 'student']

@@ -54,9 +54,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return value
     
 class StudentProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
+    email = serializers.CharField(source='user.email', read_only=True)
+
     class Meta:
         model = Student
-        fields = ['dob', 'phone_number', 'address', 'university_name', 'university_id_proof']
+        fields = ['username', 'first_name', 'last_name', 'email', 'dob', 'phone_number', 'address', 'university_name', 'university_id_proof']
 
     def validate_phone_number(self, value):
         # Ensure the phone number follows the required format.

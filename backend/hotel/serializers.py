@@ -150,3 +150,9 @@ class ReservationDetailSerializer(serializers.ModelSerializer):
             'check_in_date', 'check_out_date', 'guests', 'room_number', 'checked_in', 
             'additional_charges', 'canceled', 'cancellation_date', 'cancellation_reason'
         ]
+        
+        
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerReviews
+        fields = ['id', 'hotel', 'student', 'rating', 'review', 'created_at', 'updated_at']

@@ -10,7 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from .serializers import UserRegistrationSerializer, ReservationSerializer, ReservationListSerializer, ReservationDetailSerializer
+from .serializers import UserRegistrationSerializer, ReservationSerializer, ReservationListSerializer, ReservationDetailSerializer, RoomSerializer, ReviewSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
@@ -288,129 +288,217 @@ class CreatePaymentIntentView(APIView):
 
 
 
+class RoomsInfoView(APIView):
+    def get(self, request, hotel_id):
+        hotel = get_object_or_404(Hotel, id=hotel_id)
+        rooms = RoomsDescription.objects.filter(hotel=hotel)
+        serializer = RoomSerializer(data=rooms)
+        # Return serialized data as JSON response
+        return Response({
+            'hotel': {'id': hotel.id, 'name': hotel.name},  # Include hotel info
+            'rooms': serializer.data  # Include serialized room data
+        }, status=status.HTTP_200_OK)
+    
+    
+    def post(self, request, hotel_id):
+        # Get the hotel object
+        hotel = get_object_or_404(Hotel, id=hotel_id)
+        
+        # Add hotel reference to the incoming data
+        data = request.data.copy()
+        data['hotel'] = hotel.id  # Include hotel ID in the data for serialization
 
-def view_room_details(request, hotel_id):
-    hotel = get_object_or_404(Hotel, id=hotel_id)
-    rooms = RoomsDescription.objects.filter(hotel=hotel)
-    return render(request, 'view_rooms.html', {'hotel': hotel, 'rooms': rooms})
+        # Use a serializer to validate and save the data
+        serializer = RoomSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()  # Save the validated data to the database
+            return Response({"message": "Room details added successfully!", "data": serializer.data}, status=status.HTTP_201_CREATED)
+        
+        # If validation fails, return errors
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-def enter_new_room(request, hotel_id):
-    hotel = get_object_or_404(Hotel, id=hotel_id)
-
-    if request.method == 'POST':
-        room_type = request.POST.get('room_type')
-        number_of_rooms = request.POST.get('number_of_rooms')
-        price_per_night = request.POST.get('price_per_night')
-        facilities = request.POST.get('facilities')
-        breakfast_included = request.POST.get('breakfast_included') == 'true'
-        room_size = request.POST.get('room_size')
-        max_occupancy = request.POST.get('max_occupancy')
-        smoking_allowed = request.POST.get('smoking_allowed') == 'true'
-
-        RoomsDescription.objects.create(
-            hotel=hotel,
-            room_type=room_type,
-            number_of_rooms=number_of_rooms,
-            price_per_night=price_per_night,
-            facilities=facilities,
-            breakfast_included=breakfast_included,
-            room_size=room_size,
-            max_occupancy=max_occupancy,
-            smoking_allowed=smoking_allowed
-        )
-
-        messages.success(request, "Room details added successfully!")
-        return redirect('hotel_dashboard')
-
-    return render(request, 'add_room.html', {'hotel': hotel})
-
-
-def update_room(request, room_id):
-    room = get_object_or_404(RoomsDescription, id=room_id)
-
-    if request.method == 'POST':
-        room.room_type = request.POST.get('room_type')
-        room.number_of_rooms = request.POST.get('number_of_rooms')
-        room.price_per_night = request.POST.get('price_per_night')
-        room.facilities = request.POST.get('facilities')
-        room.breakfast_included = request.POST.get('breakfast_included') == 'true'
-        room.room_size = request.POST.get('room_size')
-        room.max_occupancy = request.POST.get('max_occupancy')
-        room.smoking_allowed = request.POST.get('smoking_allowed') == 'true'
-
-        room.save()
-        messages.success(request, "Room details updated successfully!")
-        return redirect('hotel_dashboard')
-
-    return render(request, 'edit_room.html', {'room': room})
-
-
-def delete_room(request, room_id):
-    room = get_object_or_404(RoomsDescription, id=room_id)
-
-    if request.method == 'POST':
+    def delete(self, request, room_id):
+        room = get_object_or_404(RoomsDescription, id=room_id)
         room.delete()
-        messages.success(request, "Room details deleted successfully!")
-        return redirect('hotel_dashboard')
+        return Response({"message": "Room details deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
+    
+    def put(self, request, room_id):
+        room = get_object_or_404(RoomsDescription, id=room_id)
+        serializer = RoomSerializer(room, data=request.data, partial=True)
 
-    return render(request, 'delete_room.html', {'room': room})
-
-
-def view_hotel_reviews(request, hotel_id):
-    hotel = get_object_or_404(Hotel, id=hotel_id)
-    reviews = CustomerReviews.objects.filter(hotel=hotel)
-    return render(request, 'view_reviews.html', {'hotel': hotel, 'reviews': reviews})
-
-
-def create_review(request, hotel_id):
-    hotel = get_object_or_404(Hotel, id=hotel_id)
-    student = request.user.student_profile
-
-    if request.method == 'POST':
-        rating = request.POST.get('rating')
-        review_text = request.POST.get('review')
-
-        CustomerReviews.objects.create(
-            hotel=hotel,
-            student=student,
-            rating=rating,
-            review=review_text
-        )
-
-        messages.success(request, "Review added successfully!")
-        return redirect('hotel_details', hotel_id=hotel_id)
-
-    return render(request, 'add_review.html', {'hotel': hotel})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Room details updated successfully!", "data": serializer.data}, status=status.HTTP_200_OK)
+        
+        return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-def edit_review(request, review_id):
-    review = get_object_or_404(CustomerReviews, id=review_id)
-    if request.user.student_profile != review.student:
-        raise PermissionDenied()
-
-    if request.method == 'POST':
-        review.rating = request.POST.get('rating')
-        review.review = request.POST.get('review')
-        review.save()
-
-        messages.success(request, "Review updated successfully!")
-        return redirect('hotel_details', hotel_id=review.hotel.id)
-
-    return render(request, 'edit_review.html', {'review': review})
+# def view_room_details(request, hotel_id):
+#     hotel = get_object_or_404(Hotel, id=hotel_id)
+#     rooms = RoomsDescription.objects.filter(hotel=hotel)
+#     return render(request, 'view_rooms.html', {'hotel': hotel, 'rooms': rooms})
 
 
-def delete_review(request, review_id):
-    review = get_object_or_404(CustomerReviews, id=review_id)
-    if request.user.student_profile != review.student:
-        raise PermissionDenied()
+# def enter_new_room(request, hotel_id):
+#     hotel = get_object_or_404(Hotel, id=hotel_id)
 
-    if request.method == 'POST':
+#     if request.method == 'POST':
+#         room_type = request.POST.get('room_type')
+#         number_of_rooms = request.POST.get('number_of_rooms')
+#         price_per_night = request.POST.get('price_per_night')
+#         facilities = request.POST.get('facilities')
+#         breakfast_included = request.POST.get('breakfast_included') == 'true'
+#         room_size = request.POST.get('room_size')
+#         max_occupancy = request.POST.get('max_occupancy')
+#         smoking_allowed = request.POST.get('smoking_allowed') == 'true'
+
+#         RoomsDescription.objects.create(
+#             hotel=hotel,
+#             room_type=room_type,
+#             number_of_rooms=number_of_rooms,
+#             price_per_night=price_per_night,
+#             facilities=facilities,
+#             breakfast_included=breakfast_included,
+#             room_size=room_size,
+#             max_occupancy=max_occupancy,
+#             smoking_allowed=smoking_allowed
+#         )
+
+#         messages.success(request, "Room details added successfully!")
+#         return redirect('hotel_dashboard')
+
+#     return render(request, 'add_room.html', {'hotel': hotel})
+
+
+# def update_room(request, room_id):
+#     room = get_object_or_404(RoomsDescription, id=room_id)
+
+#     if request.method == 'POST':
+#         room.room_type = request.POST.get('room_type')
+#         room.number_of_rooms = request.POST.get('number_of_rooms')
+#         room.price_per_night = request.POST.get('price_per_night')
+#         room.facilities = request.POST.get('facilities')
+#         room.breakfast_included = request.POST.get('breakfast_included') == 'true'
+#         room.room_size = request.POST.get('room_size')
+#         room.max_occupancy = request.POST.get('max_occupancy')
+#         room.smoking_allowed = request.POST.get('smoking_allowed') == 'true'
+
+#         room.save()
+#         messages.success(request, "Room details updated successfully!")
+#         return redirect('hotel_dashboard')
+
+#     return render(request, 'edit_room.html', {'room': room})
+
+
+# def delete_room(request, room_id):
+#     room = get_object_or_404(RoomsDescription, id=room_id)
+
+#     if request.method == 'POST':
+#         room.delete()
+#         messages.success(request, "Room details deleted successfully!")
+#         return redirect('hotel_dashboard')
+
+#     return render(request, 'delete_room.html', {'room': room})
+
+class HotelReviewsAPIView(APIView):
+    def get(self, request, hotel_id):
+        """View all reviews for a specific hotel."""
+        hotel = get_object_or_404(Hotel, id=hotel_id)
+        reviews = CustomerReviews.objects.filter(hotel=hotel)
+        serializer = ReviewSerializer(reviews, many=True)
+        return Response({"hotel": hotel.name, "reviews": serializer.data}, status=status.HTTP_200_OK)
+
+    def post(self, request, hotel_id):
+        """Create a new review for a specific hotel."""
+        hotel = get_object_or_404(Hotel, id=hotel_id)
+        student = request.user.student_profile
+
+        data = request.data.copy()
+        data["hotel"] = hotel.id
+        data["student"] = student.id
+
+        serializer = ReviewSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Review added successfully!", "review": serializer.data}, status=status.HTTP_201_CREATED)
+        return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, review_id):
+        """Edit an existing review."""
+        review = get_object_or_404(CustomerReviews, id=review_id)
+        if request.user.student_profile != review.student:
+            raise PermissionDenied()
+
+        serializer = ReviewSerializer(review, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Review updated successfully!", "review": serializer.data}, status=status.HTTP_200_OK)
+        return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, review_id):
+        """Delete an existing review."""
+        review = get_object_or_404(CustomerReviews, id=review_id)
+        if request.user.student_profile != review.student:
+            raise PermissionDenied()
+
         review.delete()
-        messages.success(request, "Review deleted successfully!")
-        return redirect('hotel_details', hotel_id=review.hotel.id)
+        return Response({"message": "Review deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
 
-    return render(request, 'delete_review.html', {'review': review})
+
+# def view_hotel_reviews(request, hotel_id):
+#     hotel = get_object_or_404(Hotel, id=hotel_id)
+#     reviews = CustomerReviews.objects.filter(hotel=hotel)
+#     return render(request, 'view_reviews.html', {'hotel': hotel, 'reviews': reviews})
+
+
+# def create_review(request, hotel_id):
+#     hotel = get_object_or_404(Hotel, id=hotel_id)
+#     student = request.user.student_profile
+
+#     if request.method == 'POST':
+#         rating = request.POST.get('rating')
+#         review_text = request.POST.get('review')
+
+#         CustomerReviews.objects.create(
+#             hotel=hotel,
+#             student=student,
+#             rating=rating,
+#             review=review_text
+#         )
+
+#         messages.success(request, "Review added successfully!")
+#         return redirect('hotel_details', hotel_id=hotel_id)
+
+#     return render(request, 'add_review.html', {'hotel': hotel})
+
+
+# def edit_review(request, review_id):
+#     review = get_object_or_404(CustomerReviews, id=review_id)
+#     if request.user.student_profile != review.student:
+#         raise PermissionDenied()
+
+#     if request.method == 'POST':
+#         review.rating = request.POST.get('rating')
+#         review.review = request.POST.get('review')
+#         review.save()
+
+#         messages.success(request, "Review updated successfully!")
+#         return redirect('hotel_details', hotel_id=review.hotel.id)
+
+#     return render(request, 'edit_review.html', {'review': review})
+
+
+# def delete_review(request, review_id):
+#     review = get_object_or_404(CustomerReviews, id=review_id)
+#     if request.user.student_profile != review.student:
+#         raise PermissionDenied()
+
+#     if request.method == 'POST':
+#         review.delete()
+#         messages.success(request, "Review deleted successfully!")
+#         return redirect('hotel_details', hotel_id=review.hotel.id)
+
+#     return render(request, 'delete_review.html', {'review': review})
 
 
 def hotel_login(request):

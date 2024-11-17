@@ -150,4 +150,4 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'https://192.168.1.34:3000']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'https://192.168.1.34:3000', 'https://campus-vacay-frontend.vercel.app']

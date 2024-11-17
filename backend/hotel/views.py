@@ -19,6 +19,7 @@ from .serializers import HotelSerializer
 from rest_framework.generics import ListAPIView, UpdateAPIView
 from django.db.models import Q
 from datetime import datetime
+import stripe
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -266,6 +267,27 @@ class CancelReservationView(APIView):
         reservation.cancel(reason)
 
         return Response({"message": "Reservation canceled successfully."}, status=status.HTTP_200_OK)
+    
+
+class CreatePaymentIntentView(APIView):
+    def post(self, request, *args, **kwargs):
+        try:
+            
+            amount = request.data.get('amount', 1099)  # Default amount in cents ($10.99)
+            currency = request.data.get('currency', 'usd')
+            
+            # Create a PaymentIntent with the order amount and currency
+            intent = stripe.PaymentIntent.create(
+                amount=amount,  # Amount in cents
+                currency=currency,
+                payment_method_types=['card'],
+            )
+            return Response({'client_secret': intent['client_secret']}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
 def view_room_details(request, hotel_id):
     hotel = get_object_or_404(Hotel, id=hotel_id)

@@ -151,3 +151,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'https://192.168.1.34:3000']
+
+# for stripe api. secret key
+STRIPE_SECRET_KEY = 'sk_test_51QKSTAJKisXYkEU9MMLSSNQNT8dkf3qPja8vMrdOQ3eDE2vkpOwO2iprAMXdtxAFPVJVsjjfLRl7Z0FW5rC89due00V4a5jvVp'
+

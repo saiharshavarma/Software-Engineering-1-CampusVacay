@@ -37,4 +37,5 @@ urlpatterns = [
     path('api/hotel/dashboard/', HotelDashboardView.as_view(), name='hotel-dashboard'),
     path('api/reservation/<int:pk>/update/', UpdateReservationView.as_view(), name='update-reservation'),
     path('api/reservation/<int:pk>/cancel/', CancelReservationView.as_view(), name='cancel-reservation'),
+    path('api/payment/create-payment-intent/', CreatePaymentIntentView.as_view(), name='create-payment-intent'),
 ]

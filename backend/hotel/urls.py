@@ -1,9 +1,9 @@
 from django.urls import path, include
 from . import views
-from .views import UserRegistrationView, LogoutView, HotelSearchView, RoomBookingView, HotelManagerReservations, HotelDashboardView, UpdateReservationView, CancelReservationView
+from .views import UserRegistrationView, LogoutView, HotelSearchView, HotelManagerReservations, HotelDashboardView#RoomBookingView, UpdateReservationView, CancelReservationView
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.routers import DefaultRouter
-from .views import ReviewViewSet, RoomViewSet, CreatePaymentIntentView
+from .views import ReviewViewSet, RoomViewSet, CreatePaymentIntentView, ReservationViewSet
 
 
 # urlpatterns = [
@@ -24,6 +24,7 @@ from .views import ReviewViewSet, RoomViewSet, CreatePaymentIntentView
 router = DefaultRouter()
 router.register(r'reviews', ReviewViewSet, basename='reviews')
 router.register(r'rooms', RoomViewSet, basename='rooms')
+router.register(r'reservations', ReservationViewSet, basename='reservations')
 
 urlpatterns = [
     #path('api/dashboard/', views.hotel_dashboard, name='hotel_dashboard'),
@@ -33,11 +34,11 @@ urlpatterns = [
     path('api/logout/', LogoutView.as_view(), name='api_logout'),
 
     path('api/search/', HotelSearchView.as_view(), name='hotel-search'),
-    path('api/<int:hotel_id>/room/<int:room_id>/book/', RoomBookingView.as_view(), name='book-room'),
+#    path('api/<int:hotel_id>/room/<int:room_id>/book/', RoomBookingView.as_view(), name='book-room'),
     path('api/hotel/reservations/', HotelManagerReservations.as_view(), name='hotel-reservations'),
     path('api/hotel/dashboard/', HotelDashboardView.as_view(), name='hotel-dashboard'),
-    path('api/reservation/<int:pk>/update/', UpdateReservationView.as_view(), name='update-reservation'),
-    path('api/reservation/<int:pk>/cancel/', CancelReservationView.as_view(), name='cancel-reservation'),
+#    path('api/reservation/<int:pk>/update/', UpdateReservationView.as_view(), name='update-reservation'),
+#    path('api/reservation/<int:pk>/cancel/', CancelReservationView.as_view(), name='cancel-reservation'),
     path('api/payment/create-payment-intent/', CreatePaymentIntentView.as_view(), name='create-payment-intent'),
 
 

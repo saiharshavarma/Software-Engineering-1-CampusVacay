@@ -109,22 +109,25 @@ class ReservationSerializer(serializers.ModelSerializer):
         check_in_date = data.get('check_in_date')
         check_out_date = data.get('check_out_date')
         
-        # Ensure both check-in and check-out dates are provided
         if not check_in_date or not check_out_date:
             raise serializers.ValidationError({
                 'check_in_date': 'Check-in date is required.' if not check_in_date else '',
                 'check_out_date': 'Check-out date is required.' if not check_out_date else ''
             })
 
-        # Ensure check-out date is after check-in date
         if check_out_date <= check_in_date:
             raise serializers.ValidationError(
                 f"Check-out date ({check_out_date}) must be after check-in date ({check_in_date})."
             )
-        
-        # Optional: Add logic to check room availability
+
 
         return data
+    
+    def create(self, validated_data):
+        reservation = super().create(validated_data)
+        reservation.amount = reservation.calculate_cost()
+        reservation.save()
+        return reservation
     
 class ReservationListSerializer(serializers.ModelSerializer):
     hotel_name = serializers.CharField(source='room.hotel.hotel_name', read_only=True)
@@ -132,11 +135,7 @@ class ReservationListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reservation
-        fields = [
-            'id', 'hotel_name', 'room_type', 'check_in_date', 'check_out_date', 
-            'guests', 'booking_date', 'first_name', 'last_name', 'email', 
-            'expected_arrival_time', 'special_requests', 'payment_mode'
-        ]
+        fields = "__all__"
 
 class ReservationDetailSerializer(serializers.ModelSerializer):
     hotel_name = serializers.CharField(source='room.hotel.hotel_name', read_only=True)
@@ -150,7 +149,6 @@ class ReservationDetailSerializer(serializers.ModelSerializer):
             'check_in_date', 'check_out_date', 'guests', 'room_number', 'checked_in', 
             'additional_charges', 'canceled', 'cancellation_date', 'cancellation_reason'
         ]
-        
         
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:

@@ -136,6 +136,25 @@ class Reservation(models.Model):
         self.cancellation_date = timezone.now()
         self.cancellation_reason = reason
         self.save()
+
+    def calculate_cost(self):
+        duration = (self.check_out_date - self.check_in_date).days
+        if duration <= 0:
+            raise ValueError("The duration of the stay must be at least one night.")
+
+        base_cost = duration * self.room.price_per_night
+
+        hotel_discount = self.hotel.student_discount / 100
+
+        discounted_cost = base_cost * (1 - hotel_discount)
+
+        if self.damage_insurance:
+            insurance_rate = 0.05  # Example: 5% extra for insurance
+            total_cost = discounted_cost * (1 + insurance_rate)
+        else:
+            total_cost = discounted_cost
+
+        return total_cost
     
 # CustomerReviews model for storing reviews from students
 class CustomerReviews(models.Model):

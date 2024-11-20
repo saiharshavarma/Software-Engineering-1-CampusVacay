@@ -20,6 +20,7 @@ from django.db.models import Q
 from datetime import datetime
 import stripe
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -70,13 +71,47 @@ class HotelDashboardView(ListAPIView):
             check_in_date=date
         ).order_by('check_in_date')
 
-class UpdateReservationView(UpdateAPIView):
-    serializer_class = ReservationDetailSerializer
-    permission_classes = [IsAuthenticated]
+# class UpdateReservationView(UpdateAPIView):
+#     serializer_class = ReservationDetailSerializer
+#     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        # Ensure that only the hotel manager can update their hotel’s reservations
-        return Reservation.objects.filter(room__hotel__user=self.request.user)
+#     # def get_permissions(self):
+#     #     if self.action in ['create', 'update', 'partial_update', 'destroy']:
+#     #         return [IsAuthenticated()]  # Only hotel managers can modify rooms
+#     #     return [AllowAny()]  # Anyone can view rooms
+
+#     def get_queryset(self):
+#         # Ensure that only the hotel manager can update their hotel’s reservations
+#         return Reservation.objects.filter(room__hotel__user=self.request.user)
+    
+#     def update(self, request, *args, **kwargs):
+#         reservation = self.get_object()  # Get the room instance being updated
+#         if reservation.hotel.user != self.request.user:
+#             raise PermissionDenied("You are not authorized to update this reservation.")
+
+#         # Deserialize and validate the updated data
+#         serializer = self.get_serializer(reservation, data=request.data, partial=False)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+
+#         # Return validation errors
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#     def partial_update(self, request, *args, **kwargs):
+#         reservation = self.get_object()
+#         print(reservation)
+#         if reservation.hotel.user != self.request.user:
+#             raise PermissionDenied("You are not authorized to update this reservation.")
+
+#         # Deserialize and validate the updated data
+#         serializer = self.get_serializer(reservation, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+
+#         # Return validation errors
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class HotelSearchView(APIView):
     def post(self, request):
@@ -151,21 +186,21 @@ class HotelSearchView(APIView):
         # Convert available_hotels to a list to return the response
         return Response(list(available_hotels.values()), status=status.HTTP_200_OK)
 
-class RoomBookingView(APIView):
-    permission_classes = [IsAuthenticated]  # Only logged-in students can book rooms
+# class RoomBookingView(APIView):
+#     permission_classes = [IsAuthenticated]  # Only logged-in students can book rooms
 
-    def post(self, request, hotel_id, room_id):
-        try:
-            room = RoomsDescription.objects.get(id=room_id, hotel__id=hotel_id)
-            hotel = Hotel.objects.get(id=hotel_id)
-        except RoomsDescription.DoesNotExist:
-            return Response({"error": "Room not found."}, status=status.HTTP_404_NOT_FOUND)
+#     def post(self, request, hotel_id, room_id):
+#         try:
+#             room = RoomsDescription.objects.get(id=room_id, hotel__id=hotel_id)
+#             hotel = Hotel.objects.get(id=hotel_id)
+#         except RoomsDescription.DoesNotExist:
+#             return Response({"error": "Room not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ReservationSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(student=request.user.student_profile, room=room, hotel=hotel)
-            return Response({"message": "Room booked successfully!", "data": serializer.data}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         serializer = ReservationSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save(student=request.user.student_profile, room=room, hotel=hotel)
+#             return Response({"message": "Room booked successfully!", "data": serializer.data}, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class HotelManagerReservations(ListAPIView):
     serializer_class = ReservationListSerializer
@@ -249,24 +284,85 @@ def hotel_registration(request):
 
     return render(request, 'hotel_registration.html', {'form': form})
 
-class CancelReservationView(APIView):
+class ReservationViewSet(ModelViewSet):
+    queryset = Reservation.objects.all()
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, pk):
-        try:
-            reservation = Reservation.objects.get(pk=pk, student=request.user.student_profile)
-        except Reservation.DoesNotExist:
-            return Response({"error": "Reservation not found or not authorized."}, status=status.HTTP_404_NOT_FOUND)
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ReservationSerializer
+        return super().get_serializer_class()
 
-        # Check if the reservation is already canceled
-        if reservation.canceled:
-            return Response({"error": "This reservation is already canceled."}, status=status.HTTP_400_BAD_REQUEST)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            reservation = serializer.save()
+            return Response({
+                "message": "Reservation created successfully!",
+                "reservation_id": reservation.id,
+                "total_cost": reservation.amount
+            }, status=201)
+        return Response(serializer.errors, status=400)
 
-        # Cancel the reservation and save the reason (if provided)
-        reason = request.data.get("cancellation_reason", "No reason provided.")
-        reservation.cancel(reason)
+    def update(self, request, *args, **kwargs):
+        reservation = self.get_object()
+        serializer = self.get_serializer(reservation, data=request.data)
+        if serializer.is_valid():
+            reservation = serializer.save()
+            reservation.amount = reservation.calculate_cost()
+            reservation.save()
+            return Response({
+                "message": "Reservation updated successfully!",
+                "reservation_id": reservation.id,
+                "total_cost": reservation.amount
+            }, status=200)
+        return Response(serializer.errors, status=400)
 
-        return Response({"message": "Reservation canceled successfully."}, status=status.HTTP_200_OK)
+    def partial_update(self, request, *args, **kwargs):
+        reservation = self.get_object()
+        serializer = self.get_serializer(reservation, data=request.data, partial=True)
+        if serializer.is_valid():
+            reservation = serializer.save()
+            if any(field in request.data for field in ['start_date', 'end_date', 'room', 'damage_insurance']):
+                reservation.amount = reservation.calculate_cost()
+                reservation.save()
+            return Response({
+                "message": "Reservation partially updated successfully!",
+                "reservation_id": reservation.id,
+                "total_cost": reservation.amount
+            }, status=200)
+        return Response(serializer.errors, status=400)
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        reservation = self.get_object()
+        reason = request.data.get('reason', None)
+        reservation.cancel(reason=reason)
+        return Response({
+            "message": "Reservation has been canceled.",
+            "reservation_id": reservation.id,
+            "cancellation_reason": reservation.cancellation_reason,
+            "cancellation_date": reservation.cancellation_date
+        }, status=200)
+
+# class CancelReservationView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request, pk):
+#         try:
+#             reservation = Reservation.objects.get(pk=pk, student=request.user.student_profile)
+#         except Reservation.DoesNotExist:
+#             return Response({"error": "Reservation not found or not authorized."}, status=status.HTTP_404_NOT_FOUND)
+
+#         # Check if the reservation is already canceled
+#         if reservation.canceled:
+#             return Response({"error": "This reservation is already canceled."}, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Cancel the reservation and save the reason (if provided)
+#         reason = request.data.get("cancellation_reason", "No reason provided.")
+#         reservation.cancel(reason)
+
+#         return Response({"message": "Reservation canceled successfully."}, status=status.HTTP_200_OK)
     
 
 class CreatePaymentIntentView(APIView):

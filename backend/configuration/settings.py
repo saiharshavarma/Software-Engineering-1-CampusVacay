@@ -46,6 +46,23 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
 ]
 
+from django.http import HttpResponse
+from django.middleware.security import SecurityMiddleware
+
+class CustomSecurityMiddleware(SecurityMiddleware):
+    def process_request(self, request):
+        response = super().process_request(request)
+        response['Referrer-Policy'] = 'no-referrer-when-downgrade'
+        return response
+
+@csrf_exempt # type: ignore
+def handle_options(request):
+    response = HttpResponse()
+    response['Access-Control-Allow-Origin'] = '*'
+    response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response['Access-Control-Allow-Headers'] = 'content-type, authorization'
+    return response
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -56,14 +73,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
-from django.middleware.security import SecurityMiddleware
-
-class CustomSecurityMiddleware(SecurityMiddleware):
-    def process_request(self, request):
-        response = super().process_request(request)
-        response['Referrer-Policy'] = 'no-referrer-when-downgrade'
-        return response
 
 ROOT_URLCONF = 'configuration.urls'
 
@@ -163,7 +172,11 @@ CORS_ALLOW_CREDENTIALS = True  # If you're using cookies or sessions
 CORS_ALLOW_HEADERS = [
     'content-type',
     'authorization',
+    'x-requested-with',
+    'accept',
+    'origin',
 ]
+
 CORS_ALLOW_METHODS = [
     'GET',
     'POST',
@@ -172,6 +185,10 @@ CORS_ALLOW_METHODS = [
     'DELETE',
     'OPTIONS',
 ]
+
+SECURE_SSL_REDIRECT = False
+
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://campus-vacay-frontend.vercel.app']
 
 APPEND_SLASH = False
 

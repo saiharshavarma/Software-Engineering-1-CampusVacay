@@ -186,7 +186,7 @@ CORS_ALLOW_METHODS = [
     'OPTIONS',
 ]
 
-SECURE_SSL_REDIRECT = False
+SECURE_SSL_REDIRECT = True
 
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://campus-vacay-frontend.vercel.app']
 

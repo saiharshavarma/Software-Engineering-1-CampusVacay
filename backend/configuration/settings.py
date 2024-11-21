@@ -48,6 +48,7 @@ INSTALLED_APPS = [
 
 from django.http import HttpResponse
 from django.middleware.security import SecurityMiddleware
+from django.views.decorators.csrf import csrf_exempt
 
 class CustomSecurityMiddleware(SecurityMiddleware):
     def process_request(self, request):
@@ -55,13 +56,13 @@ class CustomSecurityMiddleware(SecurityMiddleware):
         response['Referrer-Policy'] = 'no-referrer-when-downgrade'
         return response
 
-@csrf_exempt # type: ignore
-def handle_options(request):
-    response = HttpResponse()
-    response['Access-Control-Allow-Origin'] = '*'
-    response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response['Access-Control-Allow-Headers'] = 'content-type, authorization'
-    return response
+# @csrf_exempt # type: ignore
+# def handle_options(request):
+#     response = HttpResponse()
+#     response['Access-Control-Allow-Origin'] = '*'
+#     response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+#     response['Access-Control-Allow-Headers'] = 'content-type, authorization'
+#     return response
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -172,9 +173,9 @@ CORS_ALLOW_CREDENTIALS = True  # If you're using cookies or sessions
 CORS_ALLOW_HEADERS = [
     'content-type',
     'authorization',
-    'x-requested-with',
-    'accept',
-    'origin',
+    # 'x-requested-with',
+    # 'accept',
+    # 'origin',
 ]
 
 CORS_ALLOW_METHODS = [
@@ -185,8 +186,6 @@ CORS_ALLOW_METHODS = [
     'DELETE',
     'OPTIONS',
 ]
-
-SECURE_SSL_REDIRECT = True
 
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://campus-vacay-frontend.vercel.app']
 

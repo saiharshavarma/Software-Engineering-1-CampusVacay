@@ -166,29 +166,54 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# CORS_ALLOW_ALL_ORIGINS = True
+
+# CORS_ALLOW_CREDENTIALS = True  # If you're using cookies or sessions
+
+# CORS_ALLOW_HEADERS = [
+#     'content-type',
+#     'authorization',
+#     # 'x-requested-with',
+#     # 'accept',
+#     # 'origin',
+# ]
+
+# CORS_ALLOW_METHODS = [
+#     'GET',
+#     'POST',
+#     'PUT',
+#     'PATCH',
+#     'DELETE',
+#     'OPTIONS',
+# ]
+
+# CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://campus-vacay-frontend.vercel.app']
+
+# APPEND_SLASH = False
+
+
+# Allow all origins and credentials
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_CREDENTIALS = True  # If you're using cookies or sessions
-
+# Allow all headers and methods
 CORS_ALLOW_HEADERS = [
-    'content-type',
-    'authorization',
-    # 'x-requested-with',
-    # 'accept',
-    # 'origin',
+    '*',  # Allow all headers
 ]
-
 CORS_ALLOW_METHODS = [
-    'GET',
-    'POST',
-    'PUT',
-    'PATCH',
-    'DELETE',
-    'OPTIONS',
+    '*',  # Allow all methods
 ]
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://campus-vacay-frontend.vercel.app']
+# CSRF Trust for Vercel and localhost
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+    'https://campus-vacay-frontend.vercel.app',
+]
 
+# Allow all hosts (not secure)
+ALLOWED_HOSTS = ["*"]
+
+# Disable APPEND_SLASH
 APPEND_SLASH = False
 
 # for stripe api. secret key

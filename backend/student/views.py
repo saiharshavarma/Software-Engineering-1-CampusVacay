@@ -38,6 +38,10 @@ class UserRegistrationView(generics.CreateAPIView):
             "data": serializer.data
         }, status=status.HTTP_201_CREATED, headers=headers)
 
+    def perform_create(self, serializer):
+        user = serializer.save(is_active=False)
+        send_email(user)
+
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 

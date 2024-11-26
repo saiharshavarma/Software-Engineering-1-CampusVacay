@@ -21,11 +21,16 @@ from datetime import datetime
 import stripe
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
+from django_email_verification import send_email
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        user = serializer.save(is_active=False)
+        send_email(user)
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]

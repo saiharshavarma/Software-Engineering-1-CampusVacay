@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views
-from .views import UserRegistrationView, LogoutView, HotelSearchView, HotelManagerReservations, HotelDashboardView#RoomBookingView, UpdateReservationView, CancelReservationView
+from .views import UserRegistrationView, LogoutView, HotelSearchView, HotelManagerReservations, HotelDashboardView, HotelProfileEditAPIView#RoomBookingView, UpdateReservationView, CancelReservationView
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.routers import DefaultRouter
 from .views import ReviewViewSet, RoomViewSet, CreatePaymentIntentView, ReservationViewSet
@@ -35,6 +35,7 @@ urlpatterns = [
 
     path('api/search/', HotelSearchView.as_view(), name='hotel-search'),
 #    path('api/<int:hotel_id>/room/<int:room_id>/book/', RoomBookingView.as_view(), name='book-room'),
+    path('api/hotel/hotel-profile/', HotelProfileEditAPIView.as_view(), name='hotel-profile-edit'),
     path('api/hotel/reservations/', HotelManagerReservations.as_view(), name='hotel-reservations'),
     path('api/hotel/dashboard/', HotelDashboardView.as_view(), name='hotel-dashboard'),
 #    path('api/reservation/<int:pk>/update/', UpdateReservationView.as_view(), name='update-reservation'),

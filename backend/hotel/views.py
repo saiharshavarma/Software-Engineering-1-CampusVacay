@@ -10,11 +10,10 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .serializers import UserRegistrationSerializer, ReservationSerializer, ReservationListSerializer, ReservationDetailSerializer, RoomSerializer, ReviewSerializer
+from .serializers import UserRegistrationSerializer, ReservationSerializer, ReservationListSerializer, ReservationDetailSerializer, RoomSerializer, ReviewSerializer, HotelSerializer
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework import generics, status
-from .serializers import HotelSerializer
 from rest_framework.generics import ListAPIView, UpdateAPIView
 from django.db.models import Q
 from datetime import datetime
@@ -61,7 +60,7 @@ def hotel_dashboard(request):
     return render(request, 'hotel_dashboard.html', context)
 
 
-class HotelDashboardView(ListAPIView):
+class HotelDashboardView(APIView):
     serializer_class = ReservationDetailSerializer
     permission_classes = [IsAuthenticated]
 
@@ -288,6 +287,53 @@ def hotel_registration(request):
         form = HotelRegistrationForm()
 
     return render(request, 'hotel_registration.html', {'form': form})
+
+class HotelProfileEditAPIView(APIView):
+    """
+    APIView for editing the hotel manager's profile.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """
+        Retrieve the authenticated user's hotel profile.
+        """
+        # Fetch the hotel profile associated with the logged-in user
+        hotel = get_object_or_404(Hotel, user=request.user)
+
+        # Serialize the hotel profile
+        serializer = HotelSerializer(hotel)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, *args, **kwargs):
+        """
+        Partially update the hotel profile (only specified fields).
+        """
+        # Fetch the hotel profile associated with the logged-in user
+        hotel = get_object_or_404(Hotel, user=request.user)
+
+        # Deserialize and validate the incoming data
+        serializer = HotelSerializer(hotel, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, *args, **kwargs):
+        """
+        Fully update the hotel profile (all fields must be provided).
+        """
+        # Fetch the hotel profile associated with the logged-in user
+        hotel = get_object_or_404(Hotel, user=request.user)
+
+        # Deserialize and validate the incoming data
+        serializer = HotelSerializer(hotel, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ReservationViewSet(ModelViewSet):
     queryset = Reservation.objects.all()

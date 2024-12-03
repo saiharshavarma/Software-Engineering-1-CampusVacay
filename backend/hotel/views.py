@@ -342,6 +342,8 @@ class ReservationViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'create':
             return ReservationSerializer
+        elif self.action == 'partial_update' or self.action == 'update':
+            return ReservationListSerializer
         return super().get_serializer_class()
 
     def create(self, request, *args, **kwargs):

@@ -152,8 +152,8 @@ class ReservationSerializer(serializers.ModelSerializer):
         fields = [
             'hotel', 'room', 'student', 'first_name', 'last_name', 'email',
             'country', 'phone_number', 'expected_arrival_time', 
-            'special_requests', 'payment_mode', 'check_in_date', 
-            'check_out_date', 'guests'
+            'special_requests', 'check_in_date', 
+            'check_out_date', 'guests', 'damage_insurance', 'stripe_payment_id', 'amount', 'amount', 'payment_status'
         ]
 
     def validate(self, data):

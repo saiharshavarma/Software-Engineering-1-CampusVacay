@@ -22,10 +22,11 @@ class Hotel(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='hotel_profile')
     
     hotel_name = models.CharField(max_length=255, verbose_name='Hotel Name')
-    address = models.TextField(verbose_name='Address')
-    location = models.CharField(max_length=255)
+    address1 = models.TextField(verbose_name='Address1')
+    address2 = models.TextField(verbose_name='Address2')
     city = models.CharField(max_length=100)
     country = models.CharField(max_length=100, default="N/A")
+    zip = models.IntegerField()
     hotel_photos = models.FileField(upload_to='hotel_photos/', verbose_name='Hotel Photos', help_text="Upload an image file", null=True, blank=True)
     
     # Phone number with validation
@@ -166,3 +167,13 @@ class CustomerReviews(models.Model):
 
     def __str__(self):
         return f'Review by {self.student.user.username} for {self.hotel.hotel_name} - {self.rating} stars on {self.date_added}'
+    
+    def save(self, *args, **kwargs):
+    # Call the original save method to save the review
+        super().save(*args, **kwargs)
+
+        # Update the average rating of the associated hotel
+        reviews = self.hotel.reviews.all()
+        average_rating = reviews.aggregate(models.Avg('rating'))['rating__avg']
+        self.hotel.average_rating = round(average_rating, 2)  # Round to 2 decimal places
+        self.hotel.save()

@@ -213,10 +213,11 @@ class StudentReservationHistoryTest(TestCase):
         self.hotel = Hotel.objects.create(
             user=self.student_user,
             hotel_name="Test Hotel",
-            address="123 Test St",
-            location="Test Location",
+            address1="123 Test St",
+            address2="Test Location",
             city="Test City",
             country="Test Country",
+            zip=11220,
             phone_number="+11234567890",
             description="A lovely hotel",
             facilities="Wi-Fi, Pool, Gym",

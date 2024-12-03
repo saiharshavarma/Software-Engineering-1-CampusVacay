@@ -6,10 +6,11 @@ import re
 class UserRegistrationSerializer(serializers.ModelSerializer):
     hotel_name = serializers.CharField(max_length=255, required=True, write_only=True)
     phone_number = serializers.CharField(max_length=12, required=True, write_only=True)
-    address = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, write_only=True)
-    location =serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
+    address1 = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, write_only=True)
+    address2 =serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
     city = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, write_only=True)
     country = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, write_only=True)
+    zip = serializers.IntegerField(required=True, write_only=True)
     hotel_photos = serializers.FileField(required=True, allow_empty_file=False, write_only=True)
     description = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
     facilities = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
@@ -23,7 +24,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'username', 'password', 'email',
-            'hotel_name', 'phone_number', 'address', 'location', 'city', 'country', 'hotel_photos', 'description', 'facilities',
+            'hotel_name', 'phone_number', 'address1', 'address2', 'city', 'country', 'zip', 'hotel_photos', 'description', 'facilities',
             'check_in_time', 'check_out_time', 'cancellation_policy',
             'student_discount', 'special_offers'
         ]
@@ -32,10 +33,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         # Extract related fields for the Hotel profile
         hotel_name = validated_data.pop('hotel_name')
         phone_number = validated_data.pop('phone_number')
-        address = validated_data.pop('address')
-        location = validated_data.pop('location')
+        address1 = validated_data.pop('address1')
+        address2 = validated_data.pop('address2')
         city = validated_data.pop('city')
         country = validated_data.pop('country')
+        zip = validated_data.pop('zip')
         hotel_photos = validated_data.pop('hotel_photos')
         description = validated_data.pop('description')
         facilities = validated_data.pop('facilities')
@@ -60,10 +62,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             user=user,
             hotel_name=hotel_name,
             phone_number=phone_number,
-            address=address,
-            location=location,
+            address1=address1,
+            address2=address2,
             city=city,
             country=country,
+            zip=zip,
             hotel_photos=hotel_photos,
             description=description,
             facilities=facilities,

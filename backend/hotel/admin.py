@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import Hotel, RoomsDescription, CustomerReviews, Reservation
 
 class HotelAdmin(admin.ModelAdmin):
-    list_display = ('get_user_id', 'hotel_name', 'get_email', 'phone_number', 'address', 'average_rating')
+    list_display = ('get_user_id', 'hotel_name', 'get_email', 'phone_number', 'address1', 'average_rating')
 
     def get_user_id(self, obj):
         return obj.user.id

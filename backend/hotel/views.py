@@ -139,7 +139,7 @@ class HotelSearchView(APIView):
 
         # Filter hotels by destination (city or country or location or address or hotel name)
         queryset = Hotel.objects.filter(
-            Q(city__icontains=destination) | Q(country__icontains=destination) | Q(location__icontains=destination) | Q(address__icontains=destination) | Q(hotel_name__icontains=destination)
+            Q(city__icontains=destination) | Q(country__icontains=destination) | Q(address2__icontains=destination) | Q(address1__icontains=destination) | Q(zip__icontains=destination) | Q(hotel_name__icontains=destination)
         )
 
         # Filter by room capacity (guests)
@@ -186,7 +186,7 @@ class HotelSearchView(APIView):
                     available_hotels[hotel.hotel_name] = {
                         "hotel_id": hotel.id,
                         "hotel_name": hotel.hotel_name,
-                        "address": hotel.address,
+                        "address": hotel.address1,
                         "description": hotel.description,
                         "facilities": hotel.facilities,
                         "check_in_time": hotel.check_in_time,
@@ -238,10 +238,11 @@ def hotel_registration(request):
             email = form.cleaned_data['email']
             hotel_name = form.cleaned_data['hotel_name']
             phone_number = form.cleaned_data['phone_number']
-            address = form.cleaned_data['address']
-            location = form.cleaned_data['location']
+            address1 = form.cleaned_data['address1']
+            address2 = form.cleaned_data['address2']
             city = form.cleaned_data['city']
             country = form.cleaned_data['country']
+            zip = form.cleaned_data['zip']
             hotel_photos = form.cleaned_data['hotel_photos']
             description = form.cleaned_data['description']
             facilities = form.cleaned_data['facilities']
@@ -275,10 +276,11 @@ def hotel_registration(request):
                 user=user,  # Associate the user with the hotel
                 hotel_name=hotel_name,
                 phone_number=phone_number,
-                address=address,
-                location=location,
+                address1=address1,
+                address2=address2,
                 city=city,
                 country=country,
+                zip=zip,
                 hotel_photos=hotel_photos,
                 description=description,
                 facilities=facilities,

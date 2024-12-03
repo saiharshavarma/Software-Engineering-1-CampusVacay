@@ -16,6 +16,8 @@ django-rest-auth
 django-rest-authtoken==2.1.4
 djangorestframework
 filelock==3.16.1
+geopy==2.4.1
+googlemaps==4.10.0
 graphene==3.3
 graphql-core==3.2.4
 graphql-relay==3.2.0

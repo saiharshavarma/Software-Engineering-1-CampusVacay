@@ -2,6 +2,30 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import Hotel, add_user_to_hotel_group, RoomsDescription, Reservation, CustomerReviews
 import re
+from geopy.geocoders import Nominatim
+import googlemaps
+
+#gmaps = googlemaps.Client(key='YOUR_GOOGLE_MAPS_API_KEY')
+gmaps = None
+
+def find_nearby_hotspots(latitude, longitude, radius=5000, limit=5):
+    """
+    Fetch nearby tourist spots using Google Places API.
+    """
+    places = gmaps.places_nearby(
+        location=(latitude, longitude),
+        radius=radius,
+        type='tourist_attraction'
+    )
+    hotspots = []
+    for place in places.get('results', [])[:limit]:
+        hotspots.append({
+            'name': place.get('name'),
+            'address': place.get('vicinity'),
+            'rating': place.get('rating', None),
+            'user_ratings_total': place.get('user_ratings_total', None)
+        })
+    return hotspots
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     hotel_name = serializers.CharField(max_length=255, required=True, write_only=True)
@@ -57,6 +81,15 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         # Add user to "Hotel" group
         add_user_to_hotel_group(user)
 
+        geolocator = Nominatim(user_agent="hotel_registration")
+        address = f"{address1}, {city}, {country}"
+        location = geolocator.geocode(address)
+        latitude = location.latitude if location else None
+        longitude = location.longitude if location else None
+
+        # Fetch nearby tourist spots if geolocation is successful
+        tourist_spots = find_nearby_hotspots(latitude, longitude) if latitude and longitude else []
+
         # Create Hotel profile linked to the User
         hotel = Hotel.objects.create(
             user=user,
@@ -74,7 +107,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             check_out_time=check_out_time,
             cancellation_policy=cancellation_policy,
             student_discount=student_discount,
-            special_offers=special_offers
+            special_offers=special_offers,
+            latitude=latitude,
+            longitude=longitude,
+            tourist_spots=tourist_spots,
         )
         hotel.full_clean()
         hotel.save()

@@ -5,6 +5,8 @@ from django.core.validators import RegexValidator
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import migrations
+from django.contrib.postgres.fields import JSONField
+import json
 
 def create_hotel_group(apps, schema_editor):
     Group.objects.get_or_create(name='Hotels')
@@ -28,6 +30,9 @@ class Hotel(models.Model):
     country = models.CharField(max_length=100, default="N/A")
     zip = models.IntegerField()
     hotel_photos = models.FileField(upload_to='hotel_photos/', verbose_name='Hotel Photos', help_text="Upload an image file", null=True, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    tourist_spots = models.JSONField(default=list) 
     
     # Phone number with validation
     phone_regex = RegexValidator(
@@ -51,19 +56,6 @@ class Hotel(models.Model):
 
     def __str__(self):
         return f'{self.hotel_name} - Hotel Profile'
-    
-    def clean(self):
-        super().clean()
-
-        if self.phone_number:
-            phone_digits = self.phone_number.replace('+', '').replace(' ', '').replace('-', '')
-            
-            if len(phone_digits) == 10:
-                self.phone_number = '+1' + phone_digits
-            elif len(phone_digits) == 11 and phone_digits.startswith('1'):
-                self.phone_number = '+' + phone_digits
-            else:
-                raise ValidationError("Phone number must have exactly 10 digits or start with '+1' followed by 10 digits.")
 
 # Rooms_Description model for managing different room types for each hotel           
 class RoomsDescription(models.Model):

@@ -1,9 +1,14 @@
 from . import views
-from django.urls import path
-from .views import UserRegistrationView, LogoutView, StudentSearchView, StudentProfileView, StudentReservationHistory
+from django.urls import path, include
+from .views import UserRegistrationView, LogoutView, StudentSearchView, StudentProfileView, StudentReservationHistory, AddFavoriteHotelView
 from rest_framework.authtoken.views import obtain_auth_token
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+router.register(r'favourite', AddFavoriteHotelView, basename='reservations')
 
 urlpatterns = [
+    path('api/', include(router.urls)),
     path('api/register/', UserRegistrationView.as_view(), name='student-user-register'),
     path('api/login/', obtain_auth_token, name='api_login'),
     path('api/logout/', LogoutView.as_view(), name='api_logout'),

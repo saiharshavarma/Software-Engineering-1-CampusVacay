@@ -13,11 +13,16 @@ from .serializers import UserRegistrationSerializer, StudentProfileSerializer, U
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import ListAPIView
 from hotel.models import Reservation
-from hotel.serializers import ReservationListSerializer
+from hotel.serializers import HotelSerializer, ReservationListSerializer
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 # from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSet
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
+from rest_framework import status
 # from datetime import datetime
 import requests
 
@@ -289,3 +294,52 @@ def view_hotel_reviews(request, hotel_id):
     hotel = get_object_or_404(Hotel, id=hotel_id)
     reviews = CustomerReviews.objects.filter(hotel=hotel)
     return render(request, 'view_reviews.html', {'hotel': hotel, 'reviews': reviews})
+
+class AddFavoriteHotelView(ViewSet):
+    """
+    ViewSet for students to add hotels to their favorite list.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        """
+        Add a hotel to the student's list of favorites.
+        """
+        hotel_id = request.data.get('hotel_id')
+        if not hotel_id:
+            return Response({"error": "Hotel ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get the logged-in student's profile
+        student = get_object_or_404(Student, user=request.user)
+
+        # Get the hotel instance
+        hotel = get_object_or_404(Hotel, id=hotel_id)
+
+        # Add hotel to student's favorites
+        if hotel in student.favorite_hotels.all():
+            return Response({"message": "This hotel is already in your list of favorite hotels."}, status=status.HTTP_200_OK)
+
+        student.favorite_hotels.add(hotel)
+        return Response({"message": f"Hotel '{hotel.hotel_name}' added to favorites."}, status=status.HTTP_200_OK)
+    
+    def list(self, request, *args, **kwargs):
+        """
+        Retrieve the list of favorite hotels for the logged-in student.
+        """
+        student = get_object_or_404(Student, user=request.user)
+        favorite_hotels = student.favorite_hotels.all()
+        serializer = HotelSerializer(favorite_hotels, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def destroy(self, request, pk=None, *args, **kwargs):
+        """
+        Remove a hotel from the student's list of favorites.
+        """
+        student = get_object_or_404(Student, user=request.user)
+        hotel = get_object_or_404(Hotel, id=pk)
+
+        if hotel not in student.favorite_hotels.all():
+            return Response({"error": "This hotel is not in your list of favorite hotels."}, status=status.HTTP_400_BAD_REQUEST)
+
+        student.favorite_hotels.remove(hotel)
+        return Response({"message": f"Hotel '{hotel.hotel_name}' removed from favorites."}, status=status.HTTP_200_OK)

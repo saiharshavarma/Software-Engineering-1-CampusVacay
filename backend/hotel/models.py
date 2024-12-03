@@ -158,7 +158,7 @@ class Reservation(models.Model):
     
 # CustomerReviews model for storing reviews from students
 class CustomerReviews(models.Model):
-    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='hotel_reviews')
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='reviews')
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='student_reviews')
     rating = models.PositiveSmallIntegerField(verbose_name='Rating', help_text="Rate between 1 to 5 stars", default=0)
     review = models.TextField(verbose_name='Review', blank=True, default="")

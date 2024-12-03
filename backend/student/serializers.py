@@ -53,15 +53,17 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Phone number must be in the format +1 followed by 10 to 12 digits, or just 10 to 12 digits.")
         return value
     
-class StudentProfileSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.username', read_only=True)
-    first_name = serializers.CharField(source='user.first_name', read_only=True)
-    last_name = serializers.CharField(source='user.last_name', read_only=True)
-    email = serializers.CharField(source='user.email', read_only=True)
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
 
+class StudentProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    
     class Meta:
         model = Student
-        fields = ['username', 'first_name', 'last_name', 'email', 'dob', 'phone_number', 'address', 'university_name', 'university_id_proof']
+        fields = '__all__'
 
     def validate_phone_number(self, value):
         # Ensure the phone number follows the required format.

@@ -6,11 +6,12 @@ from django.contrib import messages
 from .forms import HotelRegistrationForm, HotelLoginForm
 from .models import add_user_to_hotel_group
 from .models import Hotel, RoomsDescription, CustomerReviews, Reservation
+from rest_framework.generics import RetrieveUpdateAPIView
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .serializers import UserRegistrationSerializer, ReservationSerializer, ReservationListSerializer, ReservationDetailSerializer, RoomSerializer, ReviewSerializer, HotelSerializer
+from .serializers import CustomerReviewSerializer, UserRegistrationSerializer, ReservationSerializer, ReservationListSerializer, ReservationDetailSerializer, RoomSerializer, ReviewSerializer, HotelSerializer, UserSerializer
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework import generics, status
@@ -148,7 +149,13 @@ class HotelSearchView(APIView):
 
         for hotel in queryset:
             hotel_rooms = hotel.rooms.all()
+            hotel_reviews = hotel.reviews.all()
+            reviews = []
+            hotel_reviews = hotel.reviews.all()
 
+    # Serialize the reviews
+            reviews = CustomerReviewSerializer(hotel_reviews, many=True).data
+            print(reviews)
             # Initialize an empty list of available rooms for this hotel
             available_rooms = []
 
@@ -184,7 +191,13 @@ class HotelSearchView(APIView):
                         "facilities": hotel.facilities,
                         "check_in_time": hotel.check_in_time,
                         "check_out_time": hotel.check_out_time,
-                        "rooms": available_rooms
+                        "rooms": available_rooms,
+                        "hotel_photos": hotel.hotel_photos.url if hotel.hotel_photos else None,
+                        "phone_number": hotel.phone_number,
+                        "cancellation_policy": hotel.cancellation_policy,
+                        "student_discount": hotel.student_discount,
+                        "average_rating": hotel.average_rating,
+                        "hotel_reviews": reviews
                     }
 
         # Convert available_hotels to a list to return the response
@@ -288,11 +301,16 @@ def hotel_registration(request):
 
     return render(request, 'hotel_registration.html', {'form': form})
 
-class HotelProfileEditAPIView(APIView):
+class HotelProfileEditAPIView(RetrieveUpdateAPIView):
     """
     APIView for editing the hotel manager's profile.
     """
+    serializer_class = HotelSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Only allow access to the logged-in user's Hotel profile
+        return Hotel.objects.filter(user=self.request.user)
 
     def get(self, request, *args, **kwargs):
         """
@@ -307,33 +325,65 @@ class HotelProfileEditAPIView(APIView):
 
     def patch(self, request, *args, **kwargs):
         """
-        Partially update the hotel profile (only specified fields).
+        Partially update the hotel profile, including related User fields.
         """
-        # Fetch the hotel profile associated with the logged-in user
-        hotel = get_object_or_404(Hotel, user=request.user)
+        hotel_profile = self.get_queryset().first()  # Get the logged-in user's profile
+        user = hotel_profile.user  # Access the related User object
 
-        # Deserialize and validate the incoming data
-        serializer = HotelSerializer(hotel, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        # Separate User-related data and Hotel-related data
+        user_fields = ['username', 'email', 'first_name', 'last_name']
+        user_data = {key: request.data[key] for key in user_fields if key in request.data}
+        hotel_data = {key: request.data[key] for key in request.data if key not in user_fields}
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Update the User model fields
+        if user_data:
+            user_serializer = UserSerializer(user, data=user_data, partial=True)
+            if user_serializer.is_valid():
+                user_serializer.save()
+            else:
+                return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update the Hotel model fields
+        if hotel_data:
+            serializer = self.get_serializer(hotel_profile, data=hotel_data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"detail": "No valid fields provided for update."}, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
         """
-        Fully update the hotel profile (all fields must be provided).
+        Fully update the hotel profile, including related User fields.
         """
-        # Fetch the hotel profile associated with the logged-in user
-        hotel = get_object_or_404(Hotel, user=request.user)
+        hotel_profile = self.get_queryset().first()  # Get the logged-in user's profile
+        user = hotel_profile.user  # Access the related User object
 
-        # Deserialize and validate the incoming data
-        serializer = HotelSerializer(hotel, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        # Separate User-related data and Hotel-related data
+        user_fields = ['username', 'email', 'first_name', 'last_name']
+        user_data = {key: request.data[key] for key in user_fields if key in request.data}
+        hotel_data = {key: request.data[key] for key in request.data if key not in user_fields}
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Update the User model fields
+        if user_data:
+            user_serializer = UserSerializer(user, data=user_data)
+            if user_serializer.is_valid():
+                user_serializer.save()
+            else:
+                return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update the Hotel model fields
+        if hotel_data:
+            serializer = self.get_serializer(hotel_profile, data=hotel_data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"detail": "No valid fields provided for update."}, status=status.HTTP_400_BAD_REQUEST)
 
 class ReservationViewSet(ModelViewSet):
     queryset = Reservation.objects.all()

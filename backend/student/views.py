@@ -9,11 +9,12 @@ from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework import serializers
-from .serializers import UserRegistrationSerializer, StudentProfileSerializer
+from .serializers import UserRegistrationSerializer, StudentProfileSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import ListAPIView
 from hotel.models import Reservation
 from hotel.serializers import ReservationListSerializer
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 # from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
@@ -162,15 +163,88 @@ def student_logout(request):
     return redirect('student_login')
 
 class StudentProfileView(RetrieveUpdateAPIView):
+    """
+    APIView for viewing and editing the student's profile.
+    """
     serializer_class = StudentProfileSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_object(self):
-        # Ensure only the logged-in student can edit their profile
-        try:
-            return self.request.user.student_profile
-        except Student.DoesNotExist:
-            raise serializers.ValidationError("Student profile not found.")
+    def get_queryset(self):
+        # Only allow access to the Student profile for the logged-in user
+        return Student.objects.filter(user=self.request.user)
+
+    def get(self, request, *args, **kwargs):
+            """
+            Retrieve the authenticated user's hotel profile.
+            """
+            # Fetch the hotel profile associated with the logged-in user
+            student = get_object_or_404(Student, user=request.user)
+            serializer = self.serializer_class(student)
+            # Serialize the hotel profile
+            #serializer = StudentProfileSerializer(student)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, *args, **kwargs):
+        """
+        Partially update the student profile, including related User fields.
+        """
+        student_profile = self.get_queryset().first()  # Get the logged-in user's profile
+        user = student_profile.user  # Access the related User object
+
+        # Separate User-related data and Student-related data
+        user_fields = ['username', 'email', 'first_name', 'last_name']  # Add all fields from the User model you want to update
+        user_data = {key: request.data[key] for key in user_fields if key in request.data}
+        student_data = {key: request.data[key] for key in request.data if key not in user_fields}
+
+        # Update the User model fields
+        if user_data:
+            user_serializer = UserSerializer(user, data=user_data, partial=True)
+            if user_serializer.is_valid():
+                user_serializer.save()
+            else:
+                return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update the Student model fields
+        if student_data:
+            serializer = self.get_serializer(student_profile, data=student_data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"detail": "No valid fields provided for update."}, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, *args, **kwargs):
+        """
+        Fully update the student profile, including related User fields.
+        """
+        student_profile = self.get_queryset().first()  # Get the logged-in user's profile
+        user = student_profile.user  # Access the related User object
+
+        # Separate User-related data and Student-related data
+        user_fields = ['username', 'email', 'first_name', 'last_name']
+        user_data = {key: request.data[key] for key in user_fields if key in request.data}
+        student_data = {key: request.data[key] for key in request.data if key not in user_fields}
+
+        # Update the User model fields
+        if user_data:
+            user_serializer = UserSerializer(user, data=user_data)
+            if user_serializer.is_valid():
+                user_serializer.save()
+            else:
+                return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update the Student model fields
+        if student_data:
+            serializer = self.get_serializer(student_profile, data=student_data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"detail": "No valid fields provided for update."}, status=status.HTTP_400_BAD_REQUEST)
 
 class StudentReservationHistory(ListAPIView):
     serializer_class = ReservationListSerializer

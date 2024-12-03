@@ -88,8 +88,20 @@ class RoomSerializer(serializers.ModelSerializer):
         model = RoomsDescription
         fields = '__all__'
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+
+class CustomerReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerReviews
+        fields = '__all__'
+
 class HotelSerializer(serializers.ModelSerializer):
     rooms = RoomSerializer(many=True, read_only=True)
+    reviews = CustomerReviewSerializer(many=True, read_only=True)
+    user = UserSerializer()
 
     class Meta:
         model = Hotel

@@ -11,6 +11,7 @@ colorama==0.4.6
 distlib==0.3.9
 Django
 django-cors-headers==4.4.0
+django-email-verification==0.3.3
 django-rest-auth
 django-rest-authtoken==2.1.4
 djangorestframework

@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import migrations
 from django.contrib.postgres.fields import JSONField
 import json
+from decimal import Decimal
 
 def create_hotel_group(apps, schema_editor):
     Group.objects.get_or_create(name='Hotels')
@@ -135,15 +136,17 @@ class Reservation(models.Model):
         if duration <= 0:
             raise ValueError("The duration of the stay must be at least one night.")
 
-        base_cost = duration * self.room.price_per_night
+        # Convert room price to Decimal and calculate base cost
+        base_cost = Decimal(duration) * self.room.price_per_night
 
-        hotel_discount = self.hotel.student_discount / 100
+        # Convert hotel discount to Decimal and apply it
+        hotel_discount = Decimal(self.hotel.student_discount) / Decimal(100)
+        discounted_cost = base_cost * (Decimal(1) - hotel_discount)
 
-        discounted_cost = base_cost * (1 - hotel_discount)
-
+        # Calculate insurance cost if applicable
         if self.damage_insurance:
-            insurance_rate = 0.05  # Example: 5% extra for insurance
-            total_cost = discounted_cost * (1 + insurance_rate)
+            insurance_rate = Decimal(0.05)  # 5% extra for insurance
+            total_cost = discounted_cost * (Decimal(1) + insurance_rate)
         else:
             total_cost = discounted_cost
 

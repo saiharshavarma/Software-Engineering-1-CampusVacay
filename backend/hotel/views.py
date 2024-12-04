@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
+from validators import ValidationError
 from .forms import HotelRegistrationForm, HotelLoginForm
 from .models import add_user_to_hotel_group
 from .models import Hotel, RoomsDescription, CustomerReviews, Reservation
@@ -22,6 +23,7 @@ import stripe
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from django_email_verification import send_email
+from student.models import Student
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -452,7 +454,14 @@ class ReservationViewSet(ModelViewSet):
         return super().get_serializer_class()
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        try:
+            student = Student.objects.get(user = request.user)
+        except AttributeError:
+            raise ValidationError({"error": "The logged-in user does not have an associated student profile."})
+
+        request_data = request.data.copy()
+        request_data['student'] = student.id
+        serializer = self.get_serializer(data=request_data)
         if serializer.is_valid():
             reservation = serializer.save()
             return Response({
@@ -491,7 +500,7 @@ class ReservationViewSet(ModelViewSet):
             }, status=200)
         return Response(serializer.errors, status=400)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['delete'])
     def cancel(self, request, pk=None):
         reservation = self.get_object()
         reason = request.data.get('reason', None)

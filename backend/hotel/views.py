@@ -197,7 +197,8 @@ class HotelSearchView(APIView):
                         "cancellation_policy": hotel.cancellation_policy,
                         "student_discount": hotel.student_discount,
                         "average_rating": hotel.average_rating,
-                        "hotel_reviews": reviews
+                        "hotel_reviews": reviews,
+                        "tourist_spots": hotel.tourist_spots
                     }
 
         # Convert available_hotels to a list to return the response

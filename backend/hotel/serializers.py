@@ -5,8 +5,8 @@ import re
 from geopy.geocoders import Nominatim
 import googlemaps
 
-#gmaps = googlemaps.Client(key='YOUR_GOOGLE_MAPS_API_KEY')
-gmaps = None
+gmaps = googlemaps.Client(key='AIzaSyCmGLgvTHSKyMvmg6SRmYYS62zzDbhwbrQ')
+#gmaps = None
 
 def find_nearby_hotspots(latitude, longitude, radius=5000, limit=5):
     """
@@ -35,7 +35,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     city = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, write_only=True)
     country = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, write_only=True)
     zip = serializers.IntegerField(required=True, write_only=True)
-    hotel_photos = serializers.FileField(required=True, allow_empty_file=False, write_only=True)
+    hotel_photos = serializers.FileField(required=True, allow_empty_file=True, write_only=True)
     description = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
     facilities = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
     check_in_time = serializers.TimeField(default="15:00", write_only=True)
@@ -48,7 +48,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'username', 'password', 'email',
-            'hotel_name', 'phone_number', 'address1', 'address2', 'city', 'country', 'zip', 'hotel_photos', 'description', 'facilities',
+            'hotel_name', 'phone_number', 'address1', 'address2', 'city', 'country', 'zip', 'description', 'facilities', 'hotel_photos'
             'check_in_time', 'check_out_time', 'cancellation_policy',
             'student_discount', 'special_offers'
         ]
@@ -153,7 +153,7 @@ class ReservationSerializer(serializers.ModelSerializer):
             'hotel', 'room', 'student', 'first_name', 'last_name', 'email',
             'country', 'phone_number', 'expected_arrival_time', 
             'special_requests', 'check_in_date', 
-            'check_out_date', 'guests', 'damage_insurance', 'stripe_payment_id', 'amount', 'amount', 'payment_status'
+            'check_out_date', 'guests', 'damage_insurance', 'stripe_payment_id', 'amount', 'currency', 'payment_status'
         ]
 
     def validate(self, data):

@@ -25,7 +25,7 @@ class Hotel(models.Model):
     
     hotel_name = models.CharField(max_length=255, verbose_name='Hotel Name')
     address1 = models.TextField(verbose_name='Address1')
-    address2 = models.TextField(verbose_name='Address2')
+    address2 = models.TextField(verbose_name='Address2', blank=True, null=True)
     city = models.CharField(max_length=100)
     country = models.CharField(max_length=100, default="N/A")
     zip = models.IntegerField()

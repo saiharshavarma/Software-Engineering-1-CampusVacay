@@ -60,6 +60,58 @@ def hotel_dashboard(request):
     }
     return render(request, 'hotel_dashboard.html', context)
 
+class TopHotelsView(APIView):
+    """
+    API to fetch top 8 hotels for the homepage.
+    """
+    def get(self, request, *args, **kwargs):
+        # Retrieve the top 8 hotels (e.g., by average rating)
+        queryset = Hotel.objects.order_by('-average_rating')[:8]
+
+        # Construct the response in the same format as HotelSearchView
+        available_hotels = {}
+
+        for hotel in queryset:
+            hotel_rooms = hotel.rooms.all()  # Assuming Hotel has a related 'rooms' field
+            hotel_reviews = hotel.reviews.all()
+            reviews = CustomerReviewSerializer(hotel_reviews, many=True).data
+
+            available_rooms = []
+            for room in hotel_rooms:
+                # No need for date filtering since this is for the homepage
+                available_room_count = room.number_of_rooms  # Assume all rooms are available
+                if available_room_count > 0:
+                    room_data = {
+                        "room_type": room.room_type,
+                        "available_rooms": available_room_count,
+                        "price_per_night": room.price_per_night,
+                        "facilities": room.facilities,
+                        "max_occupancy": room.max_occupancy
+                    }
+                    available_rooms.append(room_data)
+
+            # Add the hotel details to the response
+            if hotel.hotel_name not in available_hotels:
+                available_hotels[hotel.hotel_name] = {
+                    "hotel_id": hotel.id,
+                    "hotel_name": hotel.hotel_name,
+                    "address": hotel.address1,
+                    "description": hotel.description,
+                    "facilities": hotel.facilities,
+                    "check_in_time": hotel.check_in_time,
+                    "check_out_time": hotel.check_out_time,
+                    "rooms": available_rooms,
+                    "hotel_photos": hotel.hotel_photos.url if hotel.hotel_photos else None,
+                    "phone_number": hotel.phone_number,
+                    "cancellation_policy": hotel.cancellation_policy,
+                    "student_discount": hotel.student_discount,
+                    "average_rating": hotel.average_rating,
+                    "hotel_reviews": reviews,
+                    "tourist_spots": hotel.tourist_spots
+                }
+
+        # Convert available_hotels to a list to return the response
+        return Response(list(available_hotels.values()), status=status.HTTP_200_OK)
 
 class HotelDashboardView(APIView):
     serializer_class = ReservationDetailSerializer

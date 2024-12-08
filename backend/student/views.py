@@ -25,6 +25,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 # from datetime import datetime
 import requests
+from django_email_verification import send_email
 
 from hotel.models import Hotel, RoomsDescription, CustomerReviews
 

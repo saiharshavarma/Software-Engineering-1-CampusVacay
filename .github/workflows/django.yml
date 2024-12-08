@@ -48,30 +48,17 @@ jobs:
       - name: Install Elastic Beanstalk CLI
         run: |
           sudo apt-get update
-          sudo apt-get install -y unzip
-          curl -O https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-          unzip -o awscli-exe-linux-x86_64.zip
-          sudo ./aws/install --update
-          curl -Lo eb.zip https://s3.amazonaws.com/elasticbeanstalk-cli-resources/releases/EBCLI-3.20.0/EBCLI-3.20.0.zip
-          unzip -o eb.zip -d ~/.ebcli
-          pip install -r ~/.ebcli/requirements.txt
-          export PATH=~/.ebcli:$PATH
-
-      - name: Configure AWS CLI
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: |
-          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-          aws configure set default.region us-east-1
+          sudo apt-get install -y python3-pip
+          pip3 install awsebcli --upgrade --user
+          export PATH=$HOME/.local/bin:$PATH
+          echo "Elastic Beanstalk CLI installed successfully"
 
       - name: Deploy to AWS Elastic Beanstalk
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          cd backend  # Navigate to backend if your application resides in a subfolder
+          cd backend
           eb init campusvacay --platform "Python 3.12 running on 64bit Amazon Linux 2023" --region us-east-1
-          eb use Campusvacay-env  # Use your environment name
+          eb use Campusvacay-env
           eb deploy

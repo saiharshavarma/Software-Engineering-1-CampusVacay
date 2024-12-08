@@ -47,12 +47,13 @@ jobs:
 
       - name: Install Elastic Beanstalk CLI
         run: |
-          sudo yum -y install jq
+          sudo apt-get update
+          sudo apt-get install -y unzip
           curl -O https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
           unzip awscli-exe-linux-x86_64.zip
           sudo ./aws/install
           curl -Lo eb.zip https://s3.amazonaws.com/elasticbeanstalk-cli-resources/releases/EBCLI-3.20.0/EBCLI-3.20.0.zip
-          unzip eb.zip -d ~/.ebcli
+          unzip -o eb.zip -d ~/.ebcli
           pip install -r ~/.ebcli/requirements.txt
           export PATH=~/.ebcli:$PATH
 

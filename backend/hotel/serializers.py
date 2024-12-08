@@ -35,22 +35,22 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     city = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, write_only=True)
     country = serializers.CharField(style={'base_template': 'textarea.html'}, required=True, write_only=True)
     zip = serializers.IntegerField(required=True, write_only=True)
-    hotel_photos = serializers.FileField(required=True, allow_empty_file=True, write_only=True)
-    description = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
-    facilities = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
-    check_in_time = serializers.TimeField(default="15:00", write_only=True)
-    check_out_time = serializers.TimeField(default="11:00", write_only=True)
-    cancellation_policy = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
-    student_discount = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, default=0.00, write_only=True)
-    special_offers = serializers.CharField(max_length=255, required=False, allow_blank=True, write_only=True)
+    # hotel_photos = serializers.FileField(required=True, allow_empty_file=True, write_only=True)
+    # description = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
+    # facilities = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
+    # check_in_time = serializers.TimeField(default="15:00", required=False, write_only=True)
+    # check_out_time = serializers.TimeField(default="11:00", required=False, write_only=True)
+    # cancellation_policy = serializers.CharField(style={'base_template': 'textarea.html'}, required=False, allow_blank=True, write_only=True)
+    # student_discount = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, default=0.00, write_only=True)
+    # special_offers = serializers.CharField(max_length=255, required=False, allow_blank=True, write_only=True)
 
     class Meta:
         model = User
         fields = [
             'username', 'password', 'email',
-            'hotel_name', 'phone_number', 'address1', 'address2', 'city', 'country', 'zip', 'description', 'facilities', 'hotel_photos'
-            'check_in_time', 'check_out_time', 'cancellation_policy',
-            'student_discount', 'special_offers'
+            'hotel_name', 'phone_number', 'address1', 'address2', 'city', 'country', 'zip', #'description', 'facilities', 'hotel_photos'
+            #'check_in_time', 'check_out_time', 'cancellation_policy',
+            #'student_discount', 'special_offers'
         ]
 
     def create(self, validated_data):
@@ -62,14 +62,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         city = validated_data.pop('city')
         country = validated_data.pop('country')
         zip = validated_data.pop('zip')
-        hotel_photos = validated_data.pop('hotel_photos')
-        description = validated_data.pop('description')
-        facilities = validated_data.pop('facilities')
-        check_in_time = validated_data.pop('check_in_time')
-        check_out_time = validated_data.pop('check_out_time')
-        cancellation_policy = validated_data.pop('cancellation_policy')
-        student_discount = validated_data.pop('student_discount')
-        special_offers = validated_data.pop('special_offers')
+        # hotel_photos = validated_data.pop('hotel_photos')
+        # description = validated_data.pop('description')
+        # facilities = validated_data.pop('facilities')
+        # check_in_time = validated_data.pop('check_in_time')
+        # check_out_time = validated_data.pop('check_out_time')
+        # cancellation_policy = validated_data.pop('cancellation_policy')
+        # student_discount = validated_data.pop('student_discount')
+        # special_offers = validated_data.pop('special_offers')
 
         # Create User object
         user = User.objects.create_user(
@@ -100,14 +100,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             city=city,
             country=country,
             zip=zip,
-            hotel_photos=hotel_photos,
-            description=description,
-            facilities=facilities,
-            check_in_time=check_in_time,
-            check_out_time=check_out_time,
-            cancellation_policy=cancellation_policy,
-            student_discount=student_discount,
-            special_offers=special_offers,
+            # hotel_photos=hotel_photos,
+            # description=description,
+            # facilities=facilities,
+            # check_in_time=check_in_time,
+            # check_out_time=check_out_time,
+            # cancellation_policy=cancellation_policy,
+            # student_discount=student_discount,
+            # special_offers=special_offers,
             latitude=latitude,
             longitude=longitude,
             tourist_spots=tourist_spots,

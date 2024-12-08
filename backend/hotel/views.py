@@ -24,6 +24,9 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from django_email_verification import send_email
 from student.models import Student
+from django.conf import settings
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -535,7 +538,6 @@ class ReservationViewSet(ModelViewSet):
 class CreatePaymentIntentView(APIView):
     def post(self, request, *args, **kwargs):
         try:
-            
             amount = request.data.get('amount', 1099)  # Default amount in cents ($10.99)
             currency = request.data.get('currency', 'usd')
             
@@ -545,7 +547,7 @@ class CreatePaymentIntentView(APIView):
                 currency=currency,
                 payment_method_types=['card'],
             )
-            return Response({'client_secret': intent['client_secret']}, status=status.HTTP_200_OK)
+            return Response({'client_secret': intent.client_secret}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

@@ -218,7 +218,7 @@ ALLOWED_HOSTS = ["*"]
 APPEND_SLASH = False
 
 # for stripe api. secret key
-STRIPE_SECRET_KEY = 'sk_test_51QKSTAJKisXYkEU9MMLSSNQNT8dkf3qPja8vMrdOQ3eDE2vkpOwO2iprAMXdtxAFPVJVsjjfLRl7Z0FW5rC89due00V4a5jvVp'
+STRIPE_SECRET_KEY = 'sk_test_51QTTD8ER4O8rsbmLEdsCGLr0vUNNskF9dDP7DcRRFeDhE4FyqyMxUStMimyMPMz4Cr31AgPzZ361m6PNYTnbr9fX00JL5L17GD'
 
 #CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'https://campus-vacay-frontend.vercel.app']
 

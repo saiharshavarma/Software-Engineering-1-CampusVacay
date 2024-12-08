@@ -4,7 +4,7 @@ from .models import Student, add_user_to_student_group
 import re
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    dob = serializers.DateField(write_only=True, input_formats=['%Y-%m-%d', '%m/%d/%Y', '%d-%m-%Y'] )
+    dob = serializers.DateField(write_only=True, input_formats=['%Y-%m-%d', '%m/%d/%Y', '%d-%m-%Y', '%Y/%m/%d'] )
     phone_number = serializers.CharField(write_only=True)
     address = serializers.CharField(write_only=True)
     university_name = serializers.CharField(write_only=True)

@@ -50,8 +50,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y unzip
           curl -O https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-          unzip awscli-exe-linux-x86_64.zip
-          sudo ./aws/install
+          unzip -o awscli-exe-linux-x86_64.zip
+          sudo ./aws/install --update
           curl -Lo eb.zip https://s3.amazonaws.com/elasticbeanstalk-cli-resources/releases/EBCLI-3.20.0/EBCLI-3.20.0.zip
           unzip -o eb.zip -d ~/.ebcli
           pip install -r ~/.ebcli/requirements.txt

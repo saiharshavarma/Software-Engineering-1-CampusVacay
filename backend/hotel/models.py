@@ -99,7 +99,7 @@ class Reservation(models.Model):
     stripe_payment_id = models.CharField(max_length=100, blank=True, null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     currency = models.CharField(max_length=3, default='usd')
-    payment_status = models.CharField(max_length=20, choices=[('Pending', 'Pending'), ('Paid', 'Paid'), ('Failed', 'Failed')], default='Pending')
+    payment_status = models.CharField(max_length=20, choices=[('succeeded', 'succeeded'), ('failed', 'failed')], default='failed')
 
     check_in_date = models.DateField()
     check_out_date = models.DateField()

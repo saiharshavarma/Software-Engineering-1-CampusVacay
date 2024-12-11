@@ -81,8 +81,17 @@ class RoomsDescription(models.Model):
 
     def __str__(self):
         return f'{self.hotel.hotel_name} - {self.room_type}'
-    
+
+class FinalReservation(models.Model):
+    currency = models.CharField(max_length=3, default='usd')
+    stripe_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    payment_status = models.CharField(max_length=20, choices=[('succeeded', 'succeeded'), ('failed', 'failed')], default='failed')
+
+    def __str__(self):
+        return f"FinalReservation {self.id} - {self.hotel.hotel_name}"    
 class Reservation(models.Model):
+    reservation = models.ForeignKey(FinalReservation, on_delete=models.CASCADE, null = True, blank=True, related_name='hotel_reservations')  
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='hotel_reservations')
     room = models.ForeignKey(RoomsDescription, on_delete=models.CASCADE, related_name='room_reservations')
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='student_reservations')
@@ -97,7 +106,7 @@ class Reservation(models.Model):
     payment_mode = models.CharField(max_length=50, choices=[('card', 'Card'), ('cash', 'Cash')], default='card')
     damage_insurance = models.BooleanField(default=False)
     stripe_payment_id = models.CharField(max_length=100, blank=True, null=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3, default='usd')
     payment_status = models.CharField(max_length=20, choices=[('succeeded', 'succeeded'), ('failed', 'failed')], default='failed')
 
@@ -151,6 +160,8 @@ class Reservation(models.Model):
             total_cost = discounted_cost
 
         return total_cost
+    
+
     
 # CustomerReviews model for storing reviews from students
 class CustomerReviews(models.Model):

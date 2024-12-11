@@ -6,13 +6,13 @@ from django.contrib import messages
 from validators import ValidationError
 from .forms import HotelRegistrationForm, HotelLoginForm
 from .models import add_user_to_hotel_group
-from .models import Hotel, RoomsDescription, CustomerReviews, Reservation, FinalReservation
+from .models import Hotel, RoomsDescription, CustomerReviews, Reservation
 from rest_framework.generics import RetrieveUpdateAPIView
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .serializers import CustomerReviewSerializer, UserRegistrationSerializer, ReservationSerializer, ReservationListSerializer, ReservationDetailSerializer, RoomSerializer, ReviewSerializer, HotelSerializer, UserSerializer, FinalReservationSerializer
+from .serializers import CustomerReviewSerializer, UserRegistrationSerializer, ReservationSerializer, ReservationListSerializer, ReservationDetailSerializer, RoomSerializer, ReviewSerializer, HotelSerializer, UserSerializer
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework import generics, status
@@ -445,13 +445,9 @@ class HotelProfileEditAPIView(RetrieveUpdateAPIView):
 
         return Response({"detail": "No valid fields provided for update."}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-
 class ReservationViewSet(ModelViewSet):
     queryset = Reservation.objects.all()
     permission_classes = [IsAuthenticated]
-    serializer_class = ReservationSerializer
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -461,40 +457,22 @@ class ReservationViewSet(ModelViewSet):
         return super().get_serializer_class()
 
     def create(self, request, *args, **kwargs):
-        # try:
-        #     student = Student.objects.get(user = request.user)
-        # except AttributeError:
-        #     raise ValidationError({"error": "The logged-in user does not have an associated student profile."})
+        try:
+            student = Student.objects.get(user = request.user)
+        except AttributeError:
+            raise ValidationError({"error": "The logged-in user does not have an associated student profile."})
 
         request_data = request.data.copy()
-        request_data['student'] = 1 #student.id
-        rooms = request_data['rooms']
-        total = 0
-        for room in rooms:
-            request_data['room'] = room
-            serializer = self.get_serializer(data=request_data)
-            if serializer.is_valid():
-                reservation = serializer.save()
-                total += reservation.amount
-            else:
-                return Response(serializer.errors, status=400)
-        
-        final_reservation_serializer = FinalReservationSerializer(data={
-                        'total_amount': round(total, 2),
-                        'currency': reservation.currency,
-                        'payment_status': 'succeeded'
-                    })
-        if final_reservation_serializer.is_valid():
-            print("called")
-            reservation = final_reservation_serializer.save()
-        else:
-            print(final_reservation_serializer.errors)
-        return Response({
-            "message": "Reservation created successfully!",
-            "reservation_id": reservation.id,
-            "total_cost": total
-        }, status=201)
-
+        request_data['student'] = student.id
+        serializer = self.get_serializer(data=request_data)
+        if serializer.is_valid():
+            reservation = serializer.save()
+            return Response({
+                "message": "Reservation created successfully!",
+                "reservation_id": reservation.id,
+                "total_cost": reservation.amount
+            }, status=201)
+        return Response(serializer.errors, status=400)
 
     def update(self, request, *args, **kwargs):
         reservation = self.get_object()

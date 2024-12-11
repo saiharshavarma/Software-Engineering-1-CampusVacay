@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Hotel, add_user_to_hotel_group, RoomsDescription, Reservation, CustomerReviews, FinalReservation
+from .models import Hotel, add_user_to_hotel_group, RoomsDescription, Reservation, CustomerReviews
 import re
 from geopy.geocoders import Nominatim
 import googlemaps
@@ -179,18 +179,6 @@ class ReservationSerializer(serializers.ModelSerializer):
         reservation.amount = reservation.calculate_cost()
         reservation.save()
         return reservation
-    
-class FinalReservationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FinalReservation
-        fields = [
-            'id',                # Auto-generated primary key
-            'stripe_payment_id', # Payment ID
-            'total_amount',      # Total cost
-            'currency',          # Currency of the payment
-            'payment_status'     # Payment status (succeeded/failed)
-        ]
-
     
 class ReservationListSerializer(serializers.ModelSerializer):
     hotel_name = serializers.CharField(source='room.hotel.hotel_name', read_only=True)

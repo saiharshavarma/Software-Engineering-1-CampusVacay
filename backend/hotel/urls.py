@@ -35,7 +35,7 @@ urlpatterns = [
 
     path('api/top-hotels/', TopHotelsView.as_view(), name='top-hotels'),
     path('api/search/', HotelSearchView.as_view(), name='hotel-search'),
-#    path('api/<int:hotel_id>/room/<int:room_id>/book/', RoomBookingView.as_view(), name='book-room'),
+#    path('api/<int:hotel_id>/room/<int:room_id>/book/', RoomBookingView.as_view(), name='book-room'), extra path
     path('api/hotel/hotel-profile/', HotelProfileEditAPIView.as_view(), name='hotel-profile-edit'),
     path('api/hotel/reservations/', HotelManagerReservations.as_view(), name='hotel-reservations'),
     path('api/hotel/dashboard/', HotelDashboardView.as_view(), name='hotel-dashboard'),

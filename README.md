@@ -10,13 +10,6 @@
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
 - [Setup](#setup)
-- [Usage](#usage)
-- [Folder Structure](#folder-structure)
-- [API Endpoints](#api-endpoints)
-- [Tests](#tests)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
 
 ---
 
@@ -42,10 +35,9 @@ Highlight the main features of the backend:
 
 Specify the technologies and libraries used:
 - **Framework**: Django 4.x
-- **Database**: PostgreSQL / SQLite
-- **Frontend Framework**: (if connected)
+- **Database**: PostgreSQL
+- **Frontend Framework**: React
 - **APIs**: Django REST Framework (DRF)
-- **Others**: Celery, Redis, Docker, etc.
 
 ---
 

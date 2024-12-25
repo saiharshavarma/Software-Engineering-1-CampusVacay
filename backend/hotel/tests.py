@@ -1,4 +1,5 @@
 from django.test import TestCase
+from unittest.mock import patch
 from django.urls import reverse
 from django.contrib.auth.models import User, Group
 from .models import Hotel, RoomsDescription, Reservation, CustomerReviews
@@ -7,7 +8,7 @@ from django.utils import timezone
 from datetime import datetime, date, timedelta
 from rest_framework.exceptions import ValidationError
 from .serializers import UserRegistrationSerializer, RoomSerializer, HotelSerializer, ReservationSerializer, ReservationListSerializer, ReservationDetailSerializer
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APITestCase
 from rest_framework import status
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -64,7 +65,8 @@ class RoomsDescriptionModelTest(TestCase):
             user=cls.user,
             hotel_name="Test Hotel",
             city="Test City",
-            phone_number="+11234567890"
+            phone_number="+11234567890",
+            zip = "11201"
         )
         cls.room = RoomsDescription.objects.create(
             hotel=cls.hotel,
@@ -107,7 +109,8 @@ class ReservationModelTest(TestCase):
             user=cls.hotel_user,
             hotel_name="Test Hotel",
             city="Test City",
-            phone_number="+11234567890"
+            phone_number="+11234567890",
+            zip = "11201"
         )
         cls.room = RoomsDescription.objects.create(
             hotel=cls.hotel,
@@ -173,7 +176,8 @@ class CustomerReviewsModelTest(TestCase):
             user=cls.hotel_user,
             hotel_name="Test Hotel",
             city="Test City",
-            phone_number="+11234567890"
+            phone_number="+11234567890",
+            zip="11201"
         )
 
         cls.student_user = User.objects.create_user(username='studentuser', password='password123')
@@ -201,7 +205,7 @@ class CustomerReviewsModelTest(TestCase):
         self.assertEqual(self.review.review, "Great experience!")
         self.assertIsNotNone(self.review.date_added)
 
-        self.review.rating = 3 
+        self.review.rating = 3
         try:
             self.review.full_clean()
         except Exception:
@@ -221,10 +225,10 @@ class UserRegistrationSerializerTest(TestCase):
             "email": "testhotel@example.com",
             "hotel_name": "Test Hotel",
             "phone_number": "+11234567890",
-            "address1": "123 Test St.",
-            "address2": "Test Location",
-            "city": "Test City",
-            "country": "Test Country",
+            "address1": "Time Square.",
+            "address2": "Time Square",
+            "city": "New York",
+            "country": "United States",
             "zip": 11220,
             "hotel_photos": SimpleUploadedFile("test_image.jpg", b"file_content", content_type="image/jpeg"),
             "description": "A cozy place",
@@ -233,7 +237,8 @@ class UserRegistrationSerializerTest(TestCase):
             "check_out_time": "11:00",
             "cancellation_policy": "Non-refundable",
             "student_discount": 5.00,
-            "special_offers": "10% off on weekends"
+            "special_offers": "10% off on weekends",
+            "tourist_spots": ['Museum', 'Park', 'Historic Site']
         }
 
     def test_user_registration_serializer_valid(self):
@@ -260,7 +265,8 @@ class RoomSerializerTest(TestCase):
             user=self.hotel_user,
             hotel_name="Test Hotel",
             city="Test City",
-            phone_number="+11234567890"
+            phone_number="+11234567890",
+            zip = "11201"
         )
         self.room_data = {
             "hotel": self.hotel.id,
@@ -293,7 +299,8 @@ class HotelSerializerTest(TestCase):
             city="Test City",
             phone_number="+11234567890",
             facilities="Wi-Fi, Pool",
-            description="A lovely place to stay"
+            description="A lovely place to stay",
+            zip = "11201"
         )
         RoomsDescription.objects.create(
             hotel=self.hotel,
@@ -321,13 +328,14 @@ class ReservationSerializerTest(TestCase):
             user=self.student_user,
             dob=date(2000, 1, 1),
             phone_number="+11234567890",
-            university_name="Test University"
+            university_name="Test University",
         )
         self.hotel = Hotel.objects.create(
             user=self.hotel_user,
             hotel_name="Test Hotel",
             city="Test City",
-            phone_number="+11234567890"
+            phone_number="+11234567890",
+            zip = "11201"
         )
         self.room = RoomsDescription.objects.create(
             hotel=self.hotel,
@@ -374,7 +382,7 @@ class ReservationListSerializerTest(TestCase):
         self.hotel_user = User.objects.create_user(username="hoteluser", password="password123")
         self.student_user = User.objects.create_user(username="studentuser", password="password123")
         self.student = Student.objects.create(user=self.student_user, dob=date(2000, 1, 1), university_name="Test University")
-        self.hotel = Hotel.objects.create(user=self.hotel_user, hotel_name="Test Hotel", city="Test City", phone_number="+11234567890")
+        self.hotel = Hotel.objects.create(user=self.hotel_user, hotel_name="Test Hotel", city="Test City", phone_number="+11234567890", zip="11201")
         self.room = RoomsDescription.objects.create(hotel=self.hotel, room_type="Single", number_of_rooms=5, price_per_night=100.00)
         self.reservation = Reservation.objects.create(
             hotel=self.hotel,
@@ -409,10 +417,10 @@ class UserRegistrationViewTest(TestCase):
             "email": "testhotel@example.com",
             "hotel_name": "Test Hotel",
             "phone_number": "+11234567890",
-            "address1": "123 Test St.",
-            "address2": "Test Location",
-            "city": "Test City",
-            "country": "Test Country",
+            "address1": "Time Square.",
+            "address2": "Time Square",
+            "city": "New York",
+            "country": "United States",
             "zip": 11220,
             "hotel_photos": SimpleUploadedFile("test_image.jpg", b"file_content", content_type="image/jpeg"),  # Mock file
             "description": "A cozy place",
@@ -421,7 +429,8 @@ class UserRegistrationViewTest(TestCase):
             "check_out_time": "11:00",
             "cancellation_policy": "Non-refundable",
             "student_discount": 5.00,
-            "special_offers": "10% off on weekends"
+            "special_offers": "10% off on weekends",
+            "tourist_spots": ['Museum', 'Park', 'Historic Site']
         }
         self.url = reverse('user-register')
 
@@ -454,7 +463,7 @@ class LoginLogoutViewTest(TestCase):
         login_response = self.client.post(self.login_url, {"username": "testuser", "password": "testpass"})
         token = login_response.data["token"]
         self.client.credentials(HTTP_AUTHORIZATION=f'Token {token}')
-        
+
         response = self.client.post(self.logout_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("message", response.data)
@@ -464,10 +473,10 @@ class HotelDashboardViewTest(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        
+
         self.user = User.objects.create_user(username="hoteluser", password="password123")
-        self.hotel = Hotel.objects.create(user=self.user, hotel_name="Test Hotel", city="Test City", phone_number="+11234567890")
-        
+        self.hotel = Hotel.objects.create(user=self.user, hotel_name="Test Hotel", city="Test City", phone_number="+11234567890", zip="11201")
+
         self.student_user = User.objects.create_user(username="studentuser", password="password123")
         self.student = Student.objects.create(
             user=self.student_user,
@@ -475,7 +484,7 @@ class HotelDashboardViewTest(TestCase):
             phone_number="+11234567890",
             university_name="Test University"
         )
-        
+
         self.room = RoomsDescription.objects.create(
             hotel=self.hotel,
             room_type="Single",
@@ -502,12 +511,12 @@ class HotelDashboardViewTest(TestCase):
         self.url = reverse('hotel-dashboard')
 
     def test_dashboard_access(self):
-        response = self.client.get(self.url, {'date': date.today().strftime('%Y-%m-%d')})
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         self.assertEqual(len(response.data), 1)
         reservation_data = response.data[0]
-        
+
         self.assertEqual(reservation_data["first_name"], "John")
         self.assertEqual(reservation_data["last_name"], "Doe")
         self.assertEqual(reservation_data["email"], "johndoe@example.com")
@@ -525,7 +534,8 @@ class HotelSearchViewTest(TestCase):
             city="Test City",
             phone_number="+11234567890",
             facilities="Wi-Fi, Pool",
-            description="A lovely place to stay"
+            description="A lovely place to stay",
+            zip = "11201"
         )
         self.room = RoomsDescription.objects.create(
             hotel=self.hotel,
@@ -560,36 +570,52 @@ class RoomBookingViewTest(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        
+
         self.hotel_user = User.objects.create_user(username="hoteluser", password="password123")
         self.student_user = User.objects.create_user(username="studentuser", password="password123")
-        
+
         self.student = Student.objects.create(
             user=self.student_user,
             dob=date(2000, 1, 1),
             phone_number="+11234567890",
             university_name="Test University"
         )
-        
+
         self.hotel = Hotel.objects.create(
-            user=self.hotel_user, 
-            hotel_name="Test Hotel", 
-            city="Test City", 
-            phone_number="+11234567890"
+            user=self.hotel_user,
+            hotel_name="Test Hotel",
+            city="Test City",
+            phone_number="+11234567890",
+            zip = "11201"
         )
         self.room = RoomsDescription.objects.create(
-            hotel=self.hotel, 
-            room_type="Single", 
-            number_of_rooms=5, 
+            hotel=self.hotel,
+            room_type="Single",
+            number_of_rooms=5,
             price_per_night=100.00
         )
-        
+        self.reservation = Reservation.objects.create(
+            hotel = self.hotel,
+            room = self.room,
+            student = self.student,
+            first_name = "John",
+            last_name = "Doe",
+            email = "johndoe@example.com",
+            country = "Testland",
+            phone_number = "+123456789",
+            expected_arrival_time = "15:00",
+            check_in_date = date.today().isoformat(),
+            check_out_date = (date.today() + timedelta(days=2)).isoformat(),
+            guests = 1
+        )
         self.client.force_authenticate(user=self.student_user)
-        
-        self.booking_url = reverse('book-room', args=[self.hotel.id, self.room.id])
+
+        self.booking_list_url = reverse('reservations-list')
+        self.booking_detail_url = reverse('reservations-detail', kwargs={'pk': self.reservation.id})
+        self.booking_cancel_url = reverse('reservations-cancel', kwargs={'pk': self.reservation.id})
 
     def test_room_booking_success(self):
-        response = self.client.post(self.booking_url, {
+        response = self.client.post(self.booking_list_url, {
             "hotel": self.hotel.id,
             "room": self.room.id,
             "student": self.student.id,
@@ -598,17 +624,17 @@ class RoomBookingViewTest(TestCase):
             "email": "johndoe@example.com",
             "country": "Testland",
             "phone_number": "+123456789",
-            "expected_arrival_time": "15:00",
+            "expected_arrival_time": "17:00",
             "check_in_date": date.today().isoformat(),
             "check_out_date": (date.today() + timedelta(days=2)).isoformat(),
             "guests": 1
         })
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("message", response.data)
-        self.assertEqual(response.data["message"], "Room booked successfully!")
+        self.assertEqual(response.data["message"], "Reservation created successfully!")
 
     def test_room_booking_invalid_dates(self):
-        response = self.client.post(self.booking_url, {
+        response = self.client.post(self.booking_list_url, {
             "hotel": self.hotel.id,
             "room": self.room.id,
             "student": self.student.id,
@@ -624,3 +650,465 @@ class RoomBookingViewTest(TestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("non_field_errors", response.data)
+
+    def test_update_reservation(self):
+        response = self.client.put(self.booking_detail_url, {
+            "hotel": self.hotel.id,
+            "room": self.room.id,
+            "student": self.student.id,
+            "first_name": "John",
+            "last_name": "Doe",
+            "email": "johndoe@example.com",
+            "country": "Testland",
+            "phone_number": "+123456789",
+            "expected_arrival_time": "16:00",
+            "check_in_date": date.today().isoformat(),
+            "check_out_date": (date.today() + timedelta(days=2)).isoformat(),
+            "guests": 1
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'Reservation updated successfully!')
+
+    def test_partial_update_reservation(self):
+        data = {
+            "room": self.room.id,
+            "last_name": "Doeeeee",
+            "guests": 2
+        }
+        response = self.client.patch(self.booking_detail_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'Reservation partially updated successfully!')
+
+    def test_cancel_reservation(self):
+        data = {
+            'reason': 'Changed plans'
+        }
+        response = self.client.post(self.booking_cancel_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+# class ReviewViewTest(TestCase):
+#     def setUp(self):
+#         # Create groups
+#         self.students_group = Group.objects.create(name='Students')
+#         self.hotels_group = Group.objects.create(name='Hotels')
+#
+#         # Create users
+#         self.student_user = User.objects.create_user(username='student', password='password123')
+#         self.student_user.groups.add(self.students_group)
+#         self.hotel_user = User.objects.create_user(username='hotel_manager', password='password123')
+#         self.hotel_user.groups.add(self.hotels_group)
+#
+#         # Create a hotel
+#         self.hotel = Hotel.objects.create(name='Hotel Test', user=self.hotel_user, zip="11201")
+#
+#         # Create a client instance
+#         self.client = APIClient()
+#
+#     def test_create_review(self):
+#         self.client.login(username='student', password='password123')
+#         data = {
+#             'hotel_id': self.hotel.id,
+#             'review': 'Great place!'
+#         }
+#         response = self.client.post('/reviews/', data)
+#         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+#
+#     def test_create_review_without_auth(self):
+#         data = {
+#             'hotel_id': self.hotel.id,
+#             'review': 'Great place!'
+#         }
+#         response = self.client.post('/reviews/', data)
+#         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+#
+#     def test_update_review(self):
+#         # Create a review
+#         review = CustomerReviews.objects.create(hotel=self.hotel, student=self.student_user.student_profile,
+#                                                 review='Good')
+#         self.client.login(username='student', password='password123')
+#         data = {
+#             'review': 'Updated review!'
+#         }
+#         response = self.client.put(f'/reviews/{review.id}/', data)
+#         self.assertEqual(response.status_code, status.HTTP_200_OK)
+#         review.refresh_from_db()
+#         self.assertEqual(review.review, 'Updated review!')
+#
+#     def test_permissions(self):
+#         self.client.login(username='hotel_manager', password='password123')
+#         response = self.client.get('/reviews/')
+#         self.assertEqual(response.status_code, status.HTTP_200_OK)
+#
+#     def test_delete_review(self):
+#         review = CustomerReviews.objects.create(hotel=self.hotel, student=self.student_user.student_profile,
+#                                                 review='Good')
+#         self.client.login(username='student', password='password123')
+#         response = self.client.delete(f'/reviews/{review.id}/')
+#         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+#         self.assertFalse(CustomerReviews.objects.filter(id=review.id).exists())
+
+class TopHotelsViewTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.student_user = User.objects.create_user(username='studentuser', password='password123')
+        self.student = Student.objects.create(
+            user=self.student_user,
+            dob=date(2000, 1, 1),
+            phone_number="+11234567290",
+            address="456 Student Lane",
+            university_name="Test University",
+            date_joined=timezone.now()
+        )
+        self.client.force_authenticate(user=self.user)
+        self.client.force_authenticate(user=self.student_user)
+
+        # Create sample hotels
+        for i in range(10):  # Creating 10 hotels to ensure we have more than 8 to test the limit
+            user = User.objects.create_user(username=f'testuser{i + 1}', password='testpassword')# Creating 10 hotels to ensure we have more than 8 to test the limit
+            self.client.force_authenticate(user=user)
+            hotel = Hotel.objects.create(
+                user=user,
+                hotel_name=f'Hotel {i + 1}',
+                address1=f'Address {i + 1}',
+                description=f'Description for Hotel {i + 1}',
+                facilities='Free WiFi, Pool',
+                check_in_time='14:00',
+                check_out_time='12:00',
+                phone_number=f'123543789{i}',
+                cancellation_policy='Free cancellation within 24 hours',
+                student_discount=True,
+                average_rating=5 - (i * 0.1),  # Different ratings
+                zip="11204"
+            )
+            self.room = RoomsDescription.objects.create(
+                hotel=hotel,
+                room_type="Single",
+                number_of_rooms=5,
+                price_per_night=120.00,
+                max_occupancy=2
+            )
+            CustomerReviews.objects.create(hotel=hotel, student=self.student, rating=4, review='Great stay!')
+
+    def test_get_top_hotels(self):
+        url = reverse('top-hotels')  # Assuming you have set the name of this URL pattern
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 8)  # Should return top 8 hotels
+
+
+class HotelProfileEditAPIViewTest(TestCase):
+    def setUp(self):
+        # Create test user
+        self.user = User.objects.create_user(username='testuser', password='password123')
+
+        # Create a hotel profile for the test user
+        self.hotel = Hotel.objects.create(
+                user=self.user,
+                hotel_name=f'Hotel 1',
+                address1=f'Address 1',
+                description=f'Description for Hotel 1',
+                facilities='Free WiFi, Pool',
+                check_in_time='14:00',
+                check_out_time='12:00',
+                phone_number=f'1235437891',
+                cancellation_policy='Free cancellation within 24 hours',
+                student_discount=True,
+                average_rating=5,  # Different ratings
+                zip="11204"
+            )
+
+        # Initialize the API client and authenticate the user
+        self.client = APIClient()
+        self.client.login(username='testuser', password='password123')
+
+        # Define the URL for the HotelProfileEditAPIView
+        self.url = reverse('hotel-profile-edit')  # Assuming the view uses a URL like this
+
+    def test_get_hotel_profile(self):
+        """
+        Test retrieving the authenticated user's hotel profile.
+        """
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_patch_hotel_profile(self):
+        """
+        Test partially updating the hotel profile and the related user fields.
+        """
+        data = {
+            'hotel_name': 'Updated Hotel Name',  # Hotel field
+        }
+
+        response = self.client.patch(self.url, data, format='json')
+
+        # Test that the response status is OK
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Test the changes were applied to the hotel and user profile
+        self.hotel.refresh_from_db()
+        self.assertEqual(self.hotel.hotel_name, 'Updated Hotel Name')
+
+    def test_put_hotel_profile(self):
+        """
+        Test fully updating the hotel profile and related user fields.
+        """
+        data = {
+            'hotel_name': 'Hotel 1',
+            'address1': 'Address 1',
+            'description' : 'Description for Hotel 1',
+            'facilities' : 'Free WiFi, Pool',
+            'check_in_time' : '14:00',
+            'check_out_time' : '12:00',
+            'phone_number' : '1235437891',
+            'cancellation_policy' : 'Free cancellation within 24 hours',
+            'student_discount' : True,
+            'average_rating' : 5,
+            'zip' : '11204'
+        }
+
+        response = self.client.put(self.url, data, format='json')
+
+        # Test that the response status is OK
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+    def test_unauthenticated_user(self):
+        """
+        Test that an unauthenticated user cannot access the hotel profile.
+        """
+        client = APIClient()  # A new client that is not authenticated
+        response = client.get(self.url)
+
+        # Test that the response status is Unauthorized
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class CreatePaymentIntentViewTest(TestCase):
+
+    def setUp(self):
+        # Initialize the API client
+        self.client = APIClient()
+
+        # The endpoint URL for the CreatePaymentIntentView
+        self.url = reverse('create-payment-intent')  # Adjust to your actual URL
+
+    def test_create_payment_intent_success(self):
+        """
+        Test successful creation of a payment intent.
+        """
+
+        # Test data (valid request)
+        data = {
+            'amount': '2000',  # Amount in cents ($20.00)
+            'currency': 'usd',
+        }
+
+        response = self.client.post(self.url, data, format='json')
+
+        # Check the response status and returned client_secret
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_payment_intent_invalid_currency(self):
+        """
+        Test invalid currency in the payment intent request.
+        """
+
+        # Test data with invalid currency
+        data = {
+            'amount': 1500,  # Amount in cents ($15.00)
+            'currency': 'invalid_currency',  # Invalid currency
+        }
+
+        response = self.client.post(self.url, data, format='json')
+
+        # Check that a 400 error is returned
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class RoomViewSetTestCase(APITestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+
+        # Create a test user and assign to 'Hotels' group
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.hotel_group = Group.objects.create(name='Hotels')
+        self.user.groups.add(self.hotel_group)
+
+        # Create a test hotel associated with the user
+        self.hotel = Hotel.objects.create(
+            user=self.user,
+            hotel_name="Test Hotel",
+            city="Test City",
+            phone_number="+11234567890",
+            zip="11201"
+        )
+
+        # Create a test room
+        self.room = RoomsDescription.objects.create(
+            hotel=self.hotel,
+            room_type="Single",
+            number_of_rooms=5,
+            price_per_night=100.00
+        )
+
+    def test_view_rooms(self):
+        url = reverse('rooms-list')  # Ensure the reverse name matches your URL patterns
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_room(self):
+        self.client.login(username='testuser', password='testpass')
+        url = reverse('rooms-list')
+        data = {
+            'room_type': 'Double',
+            'number_of_rooms': '5',
+            'price_per_night': '100.00',
+            'facilities': 'Free WiFi, Pool',
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_update_room(self):
+        self.client.login(username='testuser', password='testpass')
+        url = reverse('rooms-detail', kwargs={'pk': self.room.pk})
+        data = {
+            'hotel': self.room.hotel.id,
+            'room_type': 'Double',
+            'number_of_rooms': '7',
+            'price_per_night': '200.00',
+            'facilities': 'Free WiFi, Pool',
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_partial_update_room(self):
+        self.client.login(username='testuser', password='testpass')
+        url = reverse('rooms-detail', kwargs={'pk': self.room.pk})
+        data = {
+            'price_per_night': '200.00',
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_delete_room(self):
+        self.client.login(username='testuser', password='testpass')
+        url = reverse('rooms-detail', kwargs={'pk': self.room.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(RoomsDescription.objects.count(), 0)
+
+    def test_permissions(self):
+        url = reverse('rooms-list')
+        data = {
+            'room_number': '102',
+            'room_type': 'Double'
+        }
+        # Test create without authentication
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+class ReviewViewSetTestCase(TestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+
+        # Create test groups
+        self.student_group = Group.objects.create(name='Students')
+        self.hotel_group = Group.objects.create(name='Hotels')
+
+        # Create test users
+        self.student_user = User.objects.create_user(username='student', password='password')
+        self.student_user.groups.add(self.student_group)
+
+        self.hotel_user = User.objects.create_user(username='hotel', password='password')
+        self.hotel_user.groups.add(self.hotel_group)
+
+        # Create test hotel
+        self.hotel = Hotel.objects.create(
+            user=self.hotel_user,
+            hotel_name="Test Hotel",
+            city="Test City",
+            phone_number="+11234567890",
+            zip="11201"
+        )
+
+        self.student = Student.objects.create(
+            user=self.student_user,
+            dob=date(2000, 1, 1),
+            phone_number="+11234567290",
+            address="456 Student Lane",
+            university_name="Test University",
+            date_joined=timezone.now()
+        )
+
+        # Create test review
+        self.review = CustomerReviews.objects.create(
+            hotel=self.hotel,
+            student=self.student,
+            rating=4,
+            review="Great experience!",
+            date_added=timezone.now()
+        )
+
+    def test_view_reviews(self):
+        url = reverse('reviews-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_review(self):
+        self.client.login(username='student', password='password')
+        url = reverse('reviews-list')
+        data = {
+            'hotel': self.hotel.id,
+            'hotel_id': self.hotel.id,
+            'student': self.student.id,
+            'rating': 4,
+            'review': 'Nice stay!',
+            'date_added': timezone.now()
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_update_review(self):
+        self.client.login(username='student', password='password')
+        url = reverse('reviews-detail', kwargs={'pk': self.review.pk})
+        data = {
+            'hotel': self.hotel.id,
+            'student': self.student.id,
+            'rating': 4,
+            'review': 'Nice stay! yes',
+            'date_added': timezone.now()
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_partial_update_review(self):
+        self.client.login(username='student', password='password')
+        url = reverse('reviews-detail', kwargs={'pk': self.review.pk})
+        data = {
+            'rating': 3
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_delete_review(self):
+        self.client.login(username='student', password='password')
+        url = reverse('reviews-detail', kwargs={'pk': self.review.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_permissions(self):
+        url = reverse('reviews-list')
+        data = {
+            'hotel': self.hotel.id,
+            'student': self.student.id,
+            'rating': 4,
+            'review': 'Nice stay! yes',
+            'date_added': timezone.now()
+        }
+        # Test create without authentication
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

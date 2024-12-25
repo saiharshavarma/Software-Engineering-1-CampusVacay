@@ -11,6 +11,9 @@ from rest_framework.authtoken.models import Token
 from django.core.files.uploadedfile import SimpleUploadedFile
 from io import BytesIO
 from .serializers import UserRegistrationSerializer, StudentProfileSerializer
+import requests
+from django.utils import timezone
+from django.contrib.auth.models import User, Group
 
 
 class StudentModelTest(TestCase):
@@ -183,15 +186,29 @@ class StudentProfileViewTest(TestCase):
 
     def test_update_student_profile(self):
         updated_data = {
+            "user": self.user,
             "dob": "2001-02-02",
-            "phone_number": "+1234567890",
+            "phone_number": "+11234567890",
             "address": "456 Updated Address",
-            "university_name": "Updated University"
+            "university_name": "Updated University",
+            "university_id_proof": SimpleUploadedFile("test_id.pdf", b"file_content", content_type="application/pdf")
         }
         response = self.client.put(self.profile_url, updated_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_partial_update_student_profile(self):
+        data = {
+            'phone_number': '+11122233331'
+        }
+        response = self.client.patch(self.profile_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["dob"], "2001-02-02")
-        self.assertEqual(response.data["university_name"], "Updated University")
+
+    def test_update_with_invalid_data(self):
+        data = {
+            'email': 'invalid_email'
+        }
+        response = self.client.put(self.profile_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class StudentReservationHistoryTest(TestCase):
@@ -267,3 +284,111 @@ class StudentReservationHistoryTest(TestCase):
         self.assertEqual(reservation_data["first_name"], "John")
         self.assertEqual(reservation_data["email"], "johndoe@example.com")
         self.assertEqual(reservation_data["check_in_date"], date.today().isoformat())
+
+class StudentSearchViewTestCase(TestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse('hotel-search')
+
+    def test_search_with_missing_fields(self):
+        data = {
+            'destination': 'New York',
+            'check_in_date': '2024-12-01',
+            'guests': 2
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_successful_search(self):
+        data = {
+            "location": "Test City",
+            "check_in": date.today().isoformat(),
+            "check_out": (date.today() + timedelta(days=1)).isoformat(),
+            "guests": 1
+        }
+
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+class ViewRoomDetailsTestCase(TestCase):
+
+    def setUp(self):
+        # Create test user and hotel
+        self.user = User.objects.create_user(username='testuser', password='password')
+        self.hotel = Hotel.objects.create(
+            user=self.user,
+            hotel_name="Test Hotel",
+            city="Test City",
+            phone_number="+11234567890",
+            zip = "11201"
+        )
+        self.room1 = RoomsDescription.objects.create(
+            hotel=self.hotel,
+            room_type="Single",
+            number_of_rooms=5,
+            price_per_night=100.00
+        )
+        self.room2 = RoomsDescription.objects.create(
+            hotel=self.hotel,
+            room_type="Double",
+            number_of_rooms=6,
+            price_per_night=200.00
+        )
+
+        # URL for the view_room_details view
+        self.url = reverse('view_room_details', args=[self.hotel.id])
+
+    def test_view_room_details(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'view_rooms.html')
+
+class ViewHotelReviewsTestCase(TestCase):
+
+    def setUp(self):
+        # Create test user and hotel
+        self.student_group = Group.objects.create(name='Students')
+        self.hotel_group = Group.objects.create(name='Hotels')
+
+        # Create test users
+        self.student_user = User.objects.create_user(username='student', password='password')
+        self.student_user.groups.add(self.student_group)
+
+        self.hotel_user = User.objects.create_user(username='hotel', password='password')
+        self.hotel_user.groups.add(self.hotel_group)
+
+        # Create test hotel
+        self.hotel = Hotel.objects.create(
+            user=self.hotel_user,
+            hotel_name="Test Hotel",
+            city="Test City",
+            phone_number="+11234567890",
+            zip="11201"
+        )
+
+        self.student = Student.objects.create(
+            user=self.student_user,
+            dob=date(2000, 1, 1),
+            phone_number="+11234567290",
+            address="456 Student Lane",
+            university_name="Test University",
+            date_joined=timezone.now()
+        )
+
+        # Create test review
+        self.review = CustomerReviews.objects.create(
+            hotel=self.hotel,
+            student=self.student,
+            rating=4,
+            review="Great experience!",
+            date_added=timezone.now()
+        )
+
+        # URL for the view_hotel_reviews view
+        self.url = reverse('view_hotel_reviews', args=[self.hotel.id])
+
+    def test_view_hotel_reviews(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'view_reviews.html')

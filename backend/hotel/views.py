@@ -47,23 +47,23 @@ class LogoutView(APIView):
         except:
             return Response({"error": "Something went wrong."}, status=400)
 
-@login_required
-def hotel_dashboard(request):
-    # Get the logged-in user's hotel profile
-    hotel = get_object_or_404(Hotel, user=request.user)
-
-    # Fetch the rooms associated with this hotel
-    rooms = RoomsDescription.objects.filter(hotel=hotel)
-
-    # Fetch the reviews for this hotel
-    reviews = CustomerReviews.objects.filter(hotel=hotel)
-
-    context = {
-        'hotel': hotel,
-        'rooms': rooms,
-        'reviews': reviews
-    }
-    return render(request, 'hotel_dashboard.html', context)
+# @login_required
+# def hotel_dashboard(request):
+#     # Get the logged-in user's hotel profile
+#     hotel = get_object_or_404(Hotel, user=request.user)
+#
+#     # Fetch the rooms associated with this hotel
+#     rooms = RoomsDescription.objects.filter(hotel=hotel)
+#
+#     # Fetch the reviews for this hotel
+#     reviews = CustomerReviews.objects.filter(hotel=hotel)
+#
+#     context = {
+#         'hotel': hotel,
+#         'rooms': rooms,
+#         'reviews': reviews
+#     }
+#     return render(request, 'hotel_dashboard.html', context)
 
 class TopHotelsView(APIView):
     """
@@ -121,6 +121,12 @@ class TopHotelsView(APIView):
 class HotelDashboardView(APIView):
     serializer_class = ReservationDetailSerializer
     permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        reservations = self.get_queryset()
+
+        serializer = self.serializer_class(reservations, many=True)
+        return Response(serializer.data)
 
     def get_queryset(self):
         # Get the selected date from query parameters (default to today)
@@ -285,81 +291,83 @@ class HotelManagerReservations(ListAPIView):
         # Filter reservations for rooms managed by the logged-in hotel manager
         return Reservation.objects.filter(room__hotel__user=self.request.user)
 
-def hotel_registration(request):
-    if request.method == 'POST':
-        form = HotelRegistrationForm(request.POST)
 
-        if form.is_valid():
-            # Create the User object (authentication details)
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            email = form.cleaned_data['email']
-            hotel_name = form.cleaned_data['hotel_name']
-            phone_number = form.cleaned_data['phone_number']
-            address1 = form.cleaned_data['address1']
-            address2 = form.cleaned_data['address2']
-            city = form.cleaned_data['city']
-            country = form.cleaned_data['country']
-            zip = form.cleaned_data['zip']
-            hotel_photos = form.cleaned_data['hotel_photos']
-            description = form.cleaned_data['description']
-            facilities = form.cleaned_data['facilities']
-            check_in_time = form.cleaned_data['check_in_time']
-            check_out_time = form.cleaned_data['check_out_time']
-            cancellation_policy = form.cleaned_data['cancellation_policy']
-            student_discount = form.cleaned_data['student_discount']
-            special_offers = form.cleaned_data['special_offers']
+# def hotel_registration(request):
+#     if request.method == 'POST':
+#         form = HotelRegistrationForm(request.POST)
+#
+#         if form.is_valid():
+#             # Create the User object (authentication details)
+#             username = form.cleaned_data['username']
+#             password = form.cleaned_data['password']
+#             email = form.cleaned_data['email']
+#             hotel_name = form.cleaned_data['hotel_name']
+#             phone_number = form.cleaned_data['phone_number']
+#             address1 = form.cleaned_data['address1']
+#             address2 = form.cleaned_data['address2']
+#             city = form.cleaned_data['city']
+#             country = form.cleaned_data['country']
+#             zip = form.cleaned_data['zip']
+#             hotel_photos = form.cleaned_data['hotel_photos']
+#             description = form.cleaned_data['description']
+#             facilities = form.cleaned_data['facilities']
+#             check_in_time = form.cleaned_data['check_in_time']
+#             check_out_time = form.cleaned_data['check_out_time']
+#             cancellation_policy = form.cleaned_data['cancellation_policy']
+#             student_discount = form.cleaned_data['student_discount']
+#             special_offers = form.cleaned_data['special_offers']
+#
+#             # Check if the username or email already exists
+#             if User.objects.filter(username=username).exists():
+#                 messages.error(request, "Username already exists")
+#                 return render(request, 'hotel_registration.html', {'form': form})
+#
+#             if User.objects.filter(email=email).exists():
+#                 messages.error(request, "Email already exists")
+#                 return render(request, 'hotel_registration.html', {'form': form})
+#
+#             # Create the User object for the hotel
+#             user = User.objects.create_user(
+#                 username=username,
+#                 email=email,
+#                 password=password
+#             )
+#
+#             # Add user to the "Hotels" group
+#             add_user_to_hotel_group(user)
+#
+#             # Now handle hotel-specific details (Hotel profile creation)
+#             hotel = Hotel.objects.create(
+#                 user=user,  # Associate the user with the hotel
+#                 hotel_name=hotel_name,
+#                 phone_number=phone_number,
+#                 address1=address1,
+#                 address2=address2,
+#                 city=city,
+#                 country=country,
+#                 zip=zip,
+#                 hotel_photos=hotel_photos,
+#                 description=description,
+#                 facilities=facilities,
+#                 check_in_time=check_in_time,
+#                 check_out_time=check_out_time,
+#                 cancellation_policy=cancellation_policy,
+#                 student_discount=student_discount,
+#                 special_offers=special_offers
+#             )
+#             hotel.full_clean()
+#             hotel.save()
+#
+#             # Log in the hotel user after registration
+#             login(request, user)
+#             messages.success(request, "Hotel registered successfully!")
+#             return redirect('hotel_dashboard')  # Redirect to the hotel dashboard after successful registration
+#
+#     else:
+#         form = HotelRegistrationForm()
+#
+#     return render(request, 'hotel_registration.html', {'form': form})
 
-            # Check if the username or email already exists
-            if User.objects.filter(username=username).exists():
-                messages.error(request, "Username already exists")
-                return render(request, 'hotel_registration.html', {'form': form})
-
-            if User.objects.filter(email=email).exists():
-                messages.error(request, "Email already exists")
-                return render(request, 'hotel_registration.html', {'form': form})
-
-            # Create the User object for the hotel
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=password
-            )
-
-            # Add user to the "Hotels" group
-            add_user_to_hotel_group(user)
-
-            # Now handle hotel-specific details (Hotel profile creation)
-            hotel = Hotel.objects.create(
-                user=user,  # Associate the user with the hotel
-                hotel_name=hotel_name,
-                phone_number=phone_number,
-                address1=address1,
-                address2=address2,
-                city=city,
-                country=country,
-                zip=zip,
-                hotel_photos=hotel_photos,
-                description=description,
-                facilities=facilities,
-                check_in_time=check_in_time,
-                check_out_time=check_out_time,
-                cancellation_policy=cancellation_policy,
-                student_discount=student_discount,
-                special_offers=special_offers
-            )
-            hotel.full_clean()
-            hotel.save()
-
-            # Log in the hotel user after registration
-            login(request, user)
-            messages.success(request, "Hotel registered successfully!")
-            return redirect('hotel_dashboard')  # Redirect to the hotel dashboard after successful registration
-
-    else:
-        form = HotelRegistrationForm()
-
-    return render(request, 'hotel_registration.html', {'form': form})
 
 class HotelProfileEditAPIView(RetrieveUpdateAPIView):
     """
@@ -717,108 +725,108 @@ class RoomViewSet(ModelViewSet):
 #     return render(request, 'delete_room.html', {'room': room})
 
 class ReviewViewSet(ModelViewSet):
-    """
-    Handles reviews for hotels:
-    - Students: Create, update, partial_update, delete their own reviews.
-    - Hotels: View all reviews for their hotel.
-    """
-    queryset = CustomerReviews.objects.all()
-    serializer_class = ReviewSerializer
-
-    def get_permissions(self):
-        """
-        Set permissions based on actions.
-        - Authenticated students can create, update, and delete reviews.
-        - Hotels can only view reviews.
-        """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsAuthenticated()]  # Students must be authenticated
-        return [AllowAny()]  # Everyone can view reviews
-
-    def get_queryset(self):
-        """
-        Automatically filter reviews based on the logged-in user's role.
-        - Students: Return their own reviews.
-        - Hotels: Return all reviews for their hotel.
-        """
-        if self.request.user.groups.filter(name='Hotels').exists():
-            # Logged-in user is a hotel manager
-            hotel = get_object_or_404(Hotel, user=self.request.user)
-            return CustomerReviews.objects.filter(hotel=hotel)
-        elif self.request.user.groups.filter(name='Students').exists():
-            # Logged-in user is a student
-            return CustomerReviews.objects.filter(student=self.request.user.student_profile)
-        elif 'hotel_id' in self.request.query_params:
-            # If a hotel_id is provided, filter reviews for that hotel
-            hotel_id = self.request.query_params.get('hotel_id')
-            hotel = get_object_or_404(Hotel, id=hotel_id)
-            return CustomerReviews.objects.filter(hotel=hotel)
-        return super().get_queryset()
-
-    def create(self, request, *args, **kwargs):
-        """
-        Students create a new review for a hotel.
-        """
-        if not request.user.groups.filter(name='Students').exists():
-            raise PermissionDenied("Only students can create reviews.")
-
-        # Get the hotel instance
-        hotel_id = request.data.get('hotel_id')
-        if not hotel_id:
-            return Response({"error": "hotel_id is required."}, status=status.HTTP_400_BAD_REQUEST)
-
-        hotel = get_object_or_404(Hotel, id=hotel_id)
-
-        # Serialize and validate data
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(hotel=hotel, student=request.user.student_profile)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def update(self, request, *args, **kwargs):
-        """
-        Students can fully update their own reviews.
-        """
-        review = self.get_object()
-        if review.student != request.user.student_profile:
-            raise PermissionDenied("You are not authorized to update this review.")
-
-        # Serialize and validate updated data
-        serializer = self.get_serializer(review, data=request.data, partial=False)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def partial_update(self, request, *args, **kwargs):
-        """
-        Students can partially update their own reviews.
-        """
-        review = self.get_object()
-        if review.student != request.user.student_profile:
-            raise PermissionDenied("You are not authorized to update this review.")
-
-        # Serialize and validate updated data
-        serializer = self.get_serializer(review, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, *args, **kwargs):
-        """
-        Students can delete their own reviews.
-        """
-        review = self.get_object()
-        if review.student != request.user.student_profile:
-            raise PermissionDenied("You are not authorized to delete this review.")
-
-        review.delete()
-        return Response({"message": "Review deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
+    # """
+    # Handles reviews for hotels:
+    # - Students: Create, update, partial_update, delete their own reviews.
+    # - Hotels: View all reviews for their hotel.
+    # """
+    # queryset = CustomerReviews.objects.all()
+    # serializer_class = ReviewSerializer
+    #
+    # def get_permissions(self):
+    #     """
+    #     Set permissions based on actions.
+    #     - Authenticated students can create, update, and delete reviews.
+    #     - Hotels can only view reviews.
+    #     """
+    #     if self.action in ['create', 'update', 'partial_update', 'destroy']:
+    #         return [IsAuthenticated()]  # Students must be authenticated
+    #     return [AllowAny()]  # Everyone can view reviews
+    #
+    # def get_queryset(self):
+    #     """
+    #     Automatically filter reviews based on the logged-in user's role.
+    #     - Students: Return their own reviews.
+    #     - Hotels: Return all reviews for their hotel.
+    #     """
+    #     if self.request.user.groups.filter(name='Hotels').exists():
+    #         # Logged-in user is a hotel manager
+    #         hotel = get_object_or_404(Hotel, user=self.request.user)
+    #         return CustomerReviews.objects.filter(hotel=hotel)
+    #     elif self.request.user.groups.filter(name='Students').exists():
+    #         # Logged-in user is a student
+    #         return CustomerReviews.objects.filter(student=self.request.user.student_profile)
+    #     elif 'hotel_id' in self.request.query_params:
+    #         # If a hotel_id is provided, filter reviews for that hotel
+    #         hotel_id = self.request.query_params.get('hotel_id')
+    #         hotel = get_object_or_404(Hotel, id=hotel_id)
+    #         return CustomerReviews.objects.filter(hotel=hotel)
+    #     return super().get_queryset()
+    #
+    # def create(self, request, *args, **kwargs):
+    #     """
+    #     Students create a new review for a hotel.
+    #     """
+    #     if not request.user.groups.filter(name='Students').exists():
+    #         raise PermissionDenied("Only students can create reviews.")
+    #
+    #     # Get the hotel instance
+    #     hotel_id = request.data.get('hotel_id')
+    #     if not hotel_id:
+    #         return Response({"error": "hotel_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+    #
+    #     hotel = get_object_or_404(Hotel, id=hotel_id)
+    #
+    #     # Serialize and validate data
+    #     serializer = self.get_serializer(data=request.data)
+    #     if serializer.is_valid():
+    #         serializer.save(hotel=hotel, student=request.user.student_profile)
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    #
+    # def update(self, request, *args, **kwargs):
+    #     """
+    #     Students can fully update their own reviews.
+    #     """
+    #     review = self.get_object()
+    #     if review.student != request.user.student_profile:
+    #         raise PermissionDenied("You are not authorized to update this review.")
+    #
+    #     # Serialize and validate updated data
+    #     serializer = self.get_serializer(review, data=request.data, partial=False)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    #
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    #
+    # def partial_update(self, request, *args, **kwargs):
+    #     """
+    #     Students can partially update their own reviews.
+    #     """
+    #     review = self.get_object()
+    #     if review.student != request.user.student_profile:
+    #         raise PermissionDenied("You are not authorized to update this review.")
+    #
+    #     # Serialize and validate updated data
+    #     serializer = self.get_serializer(review, data=request.data, partial=True)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    #
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    #
+    # def destroy(self, request, *args, **kwargs):
+    #     """
+    #     Students can delete their own reviews.
+    #     """
+    #     review = self.get_object()
+    #     if review.student != request.user.student_profile:
+    #         raise PermissionDenied("You are not authorized to delete this review.")
+    #
+    #     review.delete()
+    #     return Response({"message": "Review deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
     """
     Handles viewing, adding, updating, and deleting reviews for hotels.
     """
@@ -970,53 +978,53 @@ class ReviewViewSet(ModelViewSet):
 #     return render(request, 'delete_review.html', {'review': review})
 
 
-def hotel_login(request):
-    # Check if the request method is GET
-    if request.method == 'GET':
-        # Check if the user is authenticated
-        if request.user.is_authenticated:
-            # Check if the user belongs to the 'Hotels' group
-            if request.user.groups.filter(name='Hotels').exists():
-                # Redirect to the hotel dashboard if the user is in the 'Hotels' group
-                return redirect('hotel_dashboard')
-            # Check if the user belongs to the 'Students' group
-            elif request.user.groups.filter(name='Students').exists():
-                # Render the index page if the user is in the 'Students' group
-                return render(request, 'index.html')
-        # Create an instance of the HotelLoginForm
-        form = HotelLoginForm(request.POST)
-        # Render the hotel login page with the form
-        return render(request, 'hotel_login.html', {'form': form})
-
-    # Check if the request method is POST
-    elif request.method == 'POST':
-        # Create an instance of the HotelLoginForm with the POST data
-        form = HotelLoginForm(request.POST)
-
-        # Validate the form
-        if form.is_valid():
-            # Get the username and password from the cleaned data
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-
-            # Authenticate the user
-            user = authenticate(username=username, password=password)
-            # Check if the user is authenticated and belongs to the 'Hotels' group
-            if user and user.groups.filter(name='Hotels').exists():
-                # Log the user in and redirect to the hotel dashboard
-                login(request, user)
-                return redirect('hotel_dashboard')
-            else:
-                # Display an error message if the username or password is invalid
-                messages.error(request, "Invalid username or password!")
-                return redirect('hotel_login')
-    else:
-        # Create an instance of the HotelLoginForm
-        form = HotelLoginForm()
-        # Render the hotel login page with the form
-        return render(request, 'hotel_login.html', {'form': form})
-
-
-def hotel_logout(request):
-    logout(request)
-    return redirect('hotel_login')
+# def hotel_login(request):
+#     # Check if the request method is GET
+#     if request.method == 'GET':
+#         # Check if the user is authenticated
+#         if request.user.is_authenticated:
+#             # Check if the user belongs to the 'Hotels' group
+#             if request.user.groups.filter(name='Hotels').exists():
+#                 # Redirect to the hotel dashboard if the user is in the 'Hotels' group
+#                 return redirect('hotel_dashboard')
+#             # Check if the user belongs to the 'Students' group
+#             elif request.user.groups.filter(name='Students').exists():
+#                 # Render the index page if the user is in the 'Students' group
+#                 return render(request, 'index.html')
+#         # Create an instance of the HotelLoginForm
+#         form = HotelLoginForm(request.POST)
+#         # Render the hotel login page with the form
+#         return render(request, 'hotel_login.html', {'form': form})
+#
+#     # Check if the request method is POST
+#     elif request.method == 'POST':
+#         # Create an instance of the HotelLoginForm with the POST data
+#         form = HotelLoginForm(request.POST)
+#
+#         # Validate the form
+#         if form.is_valid():
+#             # Get the username and password from the cleaned data
+#             username = form.cleaned_data['username']
+#             password = form.cleaned_data['password']
+#
+#             # Authenticate the user
+#             user = authenticate(username=username, password=password)
+#             # Check if the user is authenticated and belongs to the 'Hotels' group
+#             if user and user.groups.filter(name='Hotels').exists():
+#                 # Log the user in and redirect to the hotel dashboard
+#                 login(request, user)
+#                 return redirect('hotel_dashboard')
+#             else:
+#                 # Display an error message if the username or password is invalid
+#                 messages.error(request, "Invalid username or password!")
+#                 return redirect('hotel_login')
+#     else:
+#         # Create an instance of the HotelLoginForm
+#         form = HotelLoginForm()
+#         # Render the hotel login page with the form
+#         return render(request, 'hotel_login.html', {'form': form})
+#
+#
+# def hotel_logout(request):
+#     logout(request)
+#     return redirect('hotel_login')
